@@ -1,6 +1,8 @@
 import simpy
 import math
 import random
+import matplotlib as mpl
+mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from mcav.sca import SCA
 
@@ -47,11 +49,11 @@ class lruCache(object):
         self.cmiss = {}
         self.updatetime = {}
         self.updatetime_in_cache = {}
-        for i in range(1, amount+1):
+        for i in range(1, amount + 1):
             self.chit[i] = 0
             self.cmiss[i] = 0
-            # self.updatetime[i] = 0
-    
+            self.updatetime[i] = random.uniform(-staleness, 0)
+
     def insert0(self, item, now):
         if item in self.stack:
             self.hit = self.hit + 1
@@ -87,9 +89,9 @@ class lruCache(object):
                 self.miss = self.miss + 1
                 self.cmiss[item] = self.cmiss[item] + 1
 
-            if item not in self.updatetime:
-                self.updatetime[item] = int(now)
-            
+            # if item not in self.updatetime:
+            #     # self.updatetime[item] = now
+
             self.updatetime_in_cache[item] = self.updatetime[item]
 
             if len(self.stack) == self.size:
@@ -97,42 +99,49 @@ class lruCache(object):
                 self.stack.append(item)
             else:
                 self.stack.append(item)
-        
-    
+
     def totalHitRatio(self):
         return float(self.hit) / (self.miss + self.hit)
-    
+
     def hitRatio(self):
         hit_ratio = {}
         for i in range(1, self.amount):
             if self.chit[i] == 0 and self.cmiss[i] == 0:
                 hit_ratio[i] = 0
             else:
-                hit_ratio[i] = float(self.chit[i])/(self.chit[i]+self.cmiss[i])
+                hit_ratio[i] = float(
+                    self.chit[i]) / (self.chit[i] + self.cmiss[i])
         return hit_ratio
 
     def update(self, now):
-        for i in range(1, self.amount +1 ):
-            if i in self.updatetime:
-                if now - self.updatetime[i] >= self.staleness:
-                    self.updatetime[i] = int(now)
+        # for i in range(1, self.amount +1 ):
+        #     if i in self.updatetime:
+        #         if now - self.updatetime[i] >= self.staleness:
+        #             self.updatetime[i] = now
+        for i in range(1, self.amount + 1):
+            if now - self.updatetime[i] >= self.staleness:
+                self.updatetime[i] = self.updatetime[i] + self.staleness
         # if 1 in self.updatetime:
         #     print(self.updatetime[1])
 
 
-def simulation(env, rate, content, popularity, cache):
+def simulation(env, rate, content, popularity, cache, staleness):
+    flag = True
     while True:
         item = random_pick(content, popularity)
         cache.insert(item, env.now)
         duration = random.expovariate(rate)
-        if int(env.now*10)%10 == 0:
+        if int(env.now*10) % 10 == 0 and flag:
             cache.update(env.now)
+            flag = False
+        if int(env.now*10) % 10 != 0:
+            flag = True
             # if int(env.now) > 20:
             #     print("simulation: ",cache.totalHitRatio())
-
-        if int(env.now)%2000 == 0:
-            print (env.now)
+        if int(env.now) % 2000 == 0:
+            print(env.now)
         yield env.timeout(duration)
+
 
 class SCAV(object):
     # realize the SCA algorithm
@@ -169,8 +178,8 @@ class SCAV(object):
                 self._computeP(i)
         for i in range(1, self._amount + 1):
             self._original_hit_ratio[i] = self._B[self._size][i]
-            self._B[self._size][i] = self._B[self._size][i] * self._validation_probability[i]
-
+            self._B[self._size][i] = self._B[
+                self._size][i] * self._validation_probability[i]
 
     def _computeP(self, position):
         # position starts from 2
@@ -185,7 +194,7 @@ class SCAV(object):
             molecule = self._nonNegative(self._alpha[i] *
                                          (1 - self._B[position - 1][i]))
             # p[i] = self._validation_probability[i] * molecule / denominator
-            p[i] =  molecule / denominator
+            p[i] = molecule / denominator
 
         self._P[position] = p
         # print p
@@ -245,13 +254,14 @@ class SCAV(object):
             P1[i] = self._alpha[i] * self._validation_probability[i]
         return P1
 
+
 if __name__ == "__main__":
 
-    amount = 10000
+    amount = 1000
     z = 0.8
     cachesize = 100
     rate = 10
-    staleness = 5
+    staleness = 2
     simulation_time = 10000
     # random.seed(42)
     zipf = Zipf(amount, z)
@@ -262,14 +272,13 @@ if __name__ == "__main__":
     cache = lruCache(cachesize, amount, staleness)
 
     env = simpy.Environment()
-    env.process(simulation(env, rate, content, popularity, cache))
+    env.process(simulation(env, rate, content, popularity, cache, staleness))
     env.run(until=simulation_time)
 
-    print("simulation: ",cache.totalHitRatio())
+    print("simulation: ", cache.totalHitRatio())
 
-    scav = SCAV(amount, cachesize, popularity_dict, rate,
-                staleness)
-    
+    scav = SCAV(amount, cachesize, popularity_dict, rate, staleness)
+
     ratio_validation = scav.hitRatio()
     # sca = SCA(amount, cachesize, popularity_dict)
     # ratio_validation = sca.hitRatio()
