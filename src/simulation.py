@@ -53,7 +53,7 @@ class lruCache(object):
             self.chit[i] = 0
             self.cmiss[i] = 0
             self.updatetime[i] = random.uniform(-staleness, 0)
-
+    
     def insert0(self, item, now):
         if item in self.stack:
             self.hit = self.hit + 1
@@ -121,25 +121,36 @@ class lruCache(object):
         for i in range(1, self.amount + 1):
             if now - self.updatetime[i] >= self.staleness:
                 self.updatetime[i] = self.updatetime[i] + self.staleness
+                # if i in self.stack:
+                #     self.stack.remove(i)
+
         # if 1 in self.updatetime:
         #     print(self.updatetime[1])
 
 
 def simulation(env, rate, content, popularity, cache, staleness):
     flag = True
+    print_flag = True
     while True:
         item = random_pick(content, popularity)
-        cache.insert(item, env.now)
+        cache.update(env.now)
+        cache.insert0(item, env.now)
         duration = random.expovariate(rate)
-        if int(env.now*10) % 10 == 0 and flag:
-            cache.update(env.now)
-            flag = False
-        if int(env.now*10) % 10 != 0:
-            flag = True
+        
+        # if int(env.now *10 ) % 10 == 0 and flag:
+        #     cache.update(env.now)
+        #     print(env.now)
+        #     # print(len(cache.stack))
+        #     flag = False
+        # if int(env.now *10 ) % 10 != 0:
+        #     flag = True
             # if int(env.now) > 20:
             #     print("simulation: ",cache.totalHitRatio())
-        if int(env.now) % 2000 == 0:
+        if int(env.now) % 2000 == 0 and print_flag:
             print(env.now)
+            print_flag = False
+        if int(env.now)% 2000 != 0 and not print_flag:
+            print_flag = True
         yield env.timeout(duration)
 
 
@@ -159,6 +170,9 @@ class SCAV(object):
         self._P[1] = self._computeP1()
         self._original_hit_ratio = {}
         self._hitRatio()
+
+    def originalHitRatio(self):
+        return self._original_hit_ratio
 
     def hitRatio(self):
         return self._B[self._size]
@@ -193,8 +207,8 @@ class SCAV(object):
         for i in range(1, self._amount + 1):
             molecule = self._nonNegative(self._alpha[i] *
                                          (1 - self._B[position - 1][i]))
-            # p[i] = self._validation_probability[i] * molecule / denominator
             p[i] = molecule / denominator
+            # p[i] = molecule / denominator
 
         self._P[position] = p
         # print p
@@ -233,6 +247,7 @@ class SCAV(object):
         for i in range(1, self._amount + 1):
             vp[i] = self._staleness_time * self._validation_rate[i] / (
                 self._staleness_time * self._validation_rate[i] + 1)
+            # vp[i] = self._staleness_time / 13.39
             # vp[i] = self._staleness_time/(self._staleness_time + 1/self._validation_rate[i]*(1-math.pow(math.e, -self._staleness_time*self._validation_rate[i])))
             # vp = {}
             # for j in range(1, self._size + 1):
@@ -251,7 +266,8 @@ class SCAV(object):
     def _computeP1(self):
         P1 = {}
         for i in range(1, self._amount + 1):
-            P1[i] = self._alpha[i] * self._validation_probability[i]
+            P1[i] = self._alpha[i]
+            # P1[i] = self._alpha[i]
         return P1
 
 
@@ -261,7 +277,7 @@ if __name__ == "__main__":
     z = 0.8
     cachesize = 100
     rate = 10
-    staleness = 2
+    staleness = 20
     simulation_time = 10000
     # random.seed(42)
     zipf = Zipf(amount, z)
@@ -278,23 +294,22 @@ if __name__ == "__main__":
     print("simulation: ", cache.totalHitRatio())
 
     scav = SCAV(amount, cachesize, popularity_dict, rate, staleness)
-
-    ratio_validation = scav.hitRatio()
-    # sca = SCA(amount, cachesize, popularity_dict)
-    # ratio_validation = sca.hitRatio()
-
+    # ratio_validation = scav.hitRatio()
     print("model: ", scav.totalHitRatio())
-    # print(scav._validation_probability)
 
-    hit_ration_model = []
+    hit_ratio_model = []
+    hit_ratio_model_original = []
     hit_ratio_sim = []
     index = []
     for i in range(1, 101):
         index.append(i)
         hit_ratio_sim.append(cache.hitRatio()[i])
-        hit_ration_model.append(ratio_validation[i])
+        hit_ratio_model.append(scav.hitRatio()[i])
+        hit_ratio_model_original.append(scav.originalHitRatio()[i])
     plt.plot(index, hit_ratio_sim, "+", label="simulation")
-    plt.plot(index, hit_ration_model, label="model")
+    plt.plot(index, hit_ratio_model, label="model")
+    plt.plot(index, hit_ratio_model_original, label="model-original")
+
 
     plt.xlabel("content ID")
     plt.ylabel("hit ratio")
