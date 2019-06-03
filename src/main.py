@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 from mcav.sca import SCA
 from mcav.zipf import Zipf
 from lru_simulator import Simulator
+from scipy import integrate
 
 
 class SCAV(object):
@@ -18,9 +19,9 @@ class SCAV(object):
         self._P = {}
         # self._P[1] = self._alpha
         self._B = {}
-        self._request_rate = rate
+        self._total_rate = rate
+        self._request_rate = self._requestRate()
         self._staleness_time = time
-        self._validation_rate = self._validationRate()
         self._validation_probability = self._validationProbability()
         self._P[1] = self._computeP1()
         self._original_hit_ratio = {}
@@ -100,23 +101,29 @@ class SCAV(object):
     def _validationProbability(self):
         vp = {}
         for i in range(1, self._amount + 1):
-            vp[i] = self._staleness_time * self._validation_rate[i] / (
-                self._staleness_time * self._validation_rate[i] + 1)
-            # vp[i] = self._staleness_time / 13.39
-            # vp[i] = self._staleness_time/(self._staleness_time + 1/self._validation_rate[i]*(1-math.pow(math.e, -self._staleness_time*self._validation_rate[i])))
-            # vp = {}
-            # for j in range(1, self._size + 1):
-            #     vp[j] = 1 - pow(
-            #         e, -self._validation_rate[i] * self._staleness_time *
-            #         (1 - pow(e, -(j - 1))))
-            #     # vp[j] = 1-pow(e,-self._validation_rate[i]*self._staleness_time*j/self._size)
+            # delta_t = self._staleness_time * math.exp(-self._request_rate[i]*self._staleness_time)
+            # if self._staleness_time - delta_t < 1/self._request_rate[i]:
+            #     vp[i] = (1-math.exp(-self._request_rate[i]*self._staleness_time))/(math.exp(-self._request_rate[i]*self._staleness_time)+1/self._request_rate[i]/self._staleness_time)
+            # else:
+            #     vp[i] = 1-math.exp(-self._request_rate[i]*self._staleness_time)
+
+            # vp[i] = self._staleness_time * self._request_rate[i] / (
+            #     self._staleness_time * self._request_rate[i] + 1)
+
+            vp[i] = 1 - (1 - (self._request_rate[i] * self._staleness_time + 1) *
+                     math.exp(-self._request_rate[i] * self._staleness_time)
+                     ) / (self._request_rate[i]**
+                          2) / self._staleness_time * (1 - math.exp(
+                              -self._request_rate[i] * self._staleness_time))
+            # rate = self._request_rate[i]
+            # vp[i] = integrate.quad(F, 0, self._staleness_time)[0] * (1 - math.exp(-rate * self._staleness_time)) / self._staleness_time
         return vp
 
-    def _validationRate(self):
-        validation_rate = {}
+    def _requestRate(self):
+        request_rate = {}
         for i in range(1, self._amount + 1):
-            validation_rate[i] = self._alpha[i] * self._request_rate
-        return validation_rate
+            request_rate[i] = self._alpha[i] * self._total_rate
+        return request_rate
 
     def _computeP1(self):
         P1 = {}
@@ -125,14 +132,17 @@ class SCAV(object):
             # P1[i] = self._alpha[i]
         return P1
 
+def F(t):
+    return t * math.exp(-rate * t)
+
 
 if __name__ == "__main__":
 
     amount = 1000
     z = 0.8
     cachesize = 100
-    rate = 40
-    staleness = 10
+    rate = 10
+    staleness = 5
     simulation_time = 10000
     # random.seed(42)
     zipf = Zipf(amount, z)
@@ -149,9 +159,10 @@ if __name__ == "__main__":
     env.run(until=simulation_time)
     print("simulation: ", simulator.cache.totalHitRatio())
 
-
     scav = SCAV(amount, cachesize, popularity_dict, rate, staleness)
     print("model: ", scav.totalHitRatio())
+    for i in range(1, 11):
+        print(scav._validation_probability[i])
 
     hit_ratio_model = []
     hit_ratio_model_original = []

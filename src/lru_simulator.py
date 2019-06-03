@@ -15,7 +15,10 @@ class LRUCache(object):
         for i in range(1, amount + 1):
             self.chit[i] = 0
             self.cmiss[i] = 0
-            self.updatetime[i] = random.uniform(-staleness, 0)
+            #self.updatetime[i] = random.uniform(-staleness, 0)
+            self.updatetime[i] = random.randint(-staleness+1, 0)
+            # self.updatetime[i] = 0
+
 
     def insert0(self, item, now):
         if item in self.stack:
@@ -34,9 +37,9 @@ class LRUCache(object):
             else:
                 self.stack.append(item)
 
-    def insert(self, item, now):
+    def insert(self, item):
         if item in self.stack:
-            if now - self.updatetime_in_cache[item] < self.staleness:
+            if self.updatetime_in_cache[item] == self.updatetime[item]:
                 if len(self.stack) == self.size:
                     self.hit = self.hit + 1
                     self.chit[item] = self.chit[item] + 1
@@ -52,16 +55,12 @@ class LRUCache(object):
                 self.miss = self.miss + 1
                 self.cmiss[item] = self.cmiss[item] + 1
 
-            # if item not in self.updatetime:
-            #     # self.updatetime[item] = now
-
             self.updatetime_in_cache[item] = self.updatetime[item]
 
             if len(self.stack) == self.size:
                 self.stack.pop(0)
-                self.stack.append(item)
-            else:
-                self.stack.append(item)
+            
+            self.stack.append(item)
 
     def totalHitRatio(self):
         return float(self.hit) / (self.miss + self.hit)
@@ -102,7 +101,7 @@ class Simulator(object):
         print_flag = True
         while True:
             item = self._random_pick(self.content, self.popularity)
-            self.cache.insert(item, self.env.now)
+            self.cache.insert(item)
             duration = random.expovariate(self.rate)
             if int(self.env.now) % 2000 == 0 and print_flag:
                 print(self.env.now)
