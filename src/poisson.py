@@ -7,8 +7,9 @@ from mcav.zipf import Zipf
 
 
 def F(t):
-    # return (math.exp(-rate * staleness) - math.exp(-rate * t)) * t
-    return -(1-math.exp(-rate*staleness))*rate*t*math.exp(-rate*t)
+    # return (math.exp(-rate * t)-math.exp(-rate * staleness)) * t
+        # return t*rate*math.exp(-rate*t)
+    return -rate*(1-t/staleness)*math.exp(-rate*t)
 
 if __name__ == "__main__":
     amount = 1000

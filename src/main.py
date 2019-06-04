@@ -107,14 +107,14 @@ class SCAV(object):
             # else:
             #     vp[i] = 1-math.exp(-self._request_rate[i]*self._staleness_time)
 
-            # vp[i] = self._staleness_time * self._request_rate[i] / (
-            #     self._staleness_time * self._request_rate[i] + 1)
+            vp[i] = self._staleness_time * self._request_rate[i] / (
+                self._staleness_time * self._request_rate[i] + 1)
 
-            vp[i] = 1 - (1 - (self._request_rate[i] * self._staleness_time + 1) *
-                     math.exp(-self._request_rate[i] * self._staleness_time)
-                     ) / (self._request_rate[i]**
-                          2) / self._staleness_time * (1 - math.exp(
-                              -self._request_rate[i] * self._staleness_time))
+            # vp[i] = 1 - (1 - (self._request_rate[i] * self._staleness_time + 1) *
+            #          math.exp(-self._request_rate[i] * self._staleness_time)
+            #          ) / (self._request_rate[i]**
+            #               2) / self._staleness_time * (1 - math.exp(
+            #                   -self._request_rate[i] * self._staleness_time))
             # rate = self._request_rate[i]
             # vp[i] = integrate.quad(F, 0, self._staleness_time)[0] * (1 - math.exp(-rate * self._staleness_time)) / self._staleness_time
         return vp
@@ -161,20 +161,33 @@ if __name__ == "__main__":
 
     scav = SCAV(amount, cachesize, popularity_dict, rate, staleness)
     print("model: ", scav.totalHitRatio())
-    for i in range(1, 11):
-        print(scav._validation_probability[i])
+
+    validation_rate_under_hit = []
+    validation_rate = []
 
     hit_ratio_model = []
     hit_ratio_model_original = []
     hit_ratio_sim = []
+    hit_ratio_sim_original = []
     index = []
     for i in range(1, 101):
         index.append(i)
         hit_ratio_sim.append(simulator.cache.hitRatio()[i])
+        hit_ratio_sim_original.append(simulator.cache.originalHitRatio()[i])
         hit_ratio_model.append(scav.hitRatio()[i])
         hit_ratio_model_original.append(scav.originalHitRatio()[i])
+        validation_rate_under_hit.append(simulator.cache.validationRateUnderHit()[i])
+        validation_rate.append(simulator.cache.validationRate()[i])
+    
+    for i in range(0, 11):
+        print(validation_rate_under_hit[i], " : ", validation_rate[i])
+    print("======")
+    for i in range(0, 11):
+        print(validation_rate_under_hit[i]*hit_ratio_sim_original[i] , ' : ', hit_ratio_sim[i])
 
     plt.plot(index, hit_ratio_sim, "+", label="simulation")
+    plt.plot(index, hit_ratio_sim_original, "*", label="simulation-original")
+
     plt.plot(index, hit_ratio_model, label="model")
     plt.plot(index, hit_ratio_model_original, label="model-original")
     plt.xlabel("content ID")

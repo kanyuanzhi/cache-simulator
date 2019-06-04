@@ -10,14 +10,29 @@ class LRUCache(object):
         self.miss = 0
         self.chit = {}
         self.cmiss = {}
+        self.original_hit=0
+        self.original_chit={}
+        self.original_miss=0
+        self.original_cmiss={}
         self.updatetime = {}
         self.updatetime_in_cache = {}
+
+        self.vtime_in_cache = {}
+        self.vtime = {}
+        self.val = {}
+        self.inval = {}
+
         for i in range(1, amount + 1):
             self.chit[i] = 0
             self.cmiss[i] = 0
+            self.original_chit[i] = 0
+            self.original_cmiss[i]=0
+            self.val[i] = 0
+            self.inval[i] = 0
             #self.updatetime[i] = random.uniform(-staleness, 0)
             self.updatetime[i] = random.randint(-staleness+1, 0)
             # self.updatetime[i] = 0
+        self.vtime = self.updatetime
 
 
     def insert0(self, item, now):
@@ -38,7 +53,20 @@ class LRUCache(object):
                 self.stack.append(item)
 
     def insert(self, item):
+        if item in self.vtime_in_cache:
+            if self.vtime_in_cache[item] == self.vtime[item]:
+                self.val[item] = self.val[item] + 1
+            else:
+                self.inval[item] = self.inval[item] + 1
+                self.vtime_in_cache[item] = self.vtime[item]
+        else:
+            self.vtime_in_cache[item] = self.vtime[item]
+            self.inval[item] = self.inval[item] + 1
+        
         if item in self.stack:
+            if len(self.stack) == self.size:
+                self.original_hit = self.original_hit + 1
+                self.original_chit[item] = self.original_chit[item] + 1
             if self.updatetime_in_cache[item] == self.updatetime[item]:
                 if len(self.stack) == self.size:
                     self.hit = self.hit + 1
@@ -54,6 +82,8 @@ class LRUCache(object):
             if len(self.stack) == self.size:
                 self.miss = self.miss + 1
                 self.cmiss[item] = self.cmiss[item] + 1
+                self.original_miss = self.original_miss + 1
+                self.original_cmiss[item] = self.original_cmiss[item] + 1
 
             self.updatetime_in_cache[item] = self.updatetime[item]
 
@@ -75,10 +105,39 @@ class LRUCache(object):
                     self.chit[i]) / (self.chit[i] + self.cmiss[i])
         return hit_ratio
 
+    def originalHitRatio(self):
+        original_hit_ratio = {}
+        for i in range(1, self.amount):
+            if self.original_chit[i] == 0 and self.original_cmiss[i] == 0:
+                original_hit_ratio[i] = 0
+            else:
+                original_hit_ratio[i] = float(
+                    self.original_chit[i]) / (self.original_chit[i] + self.original_cmiss[i])
+        return original_hit_ratio
+    
+    def validationRateUnderHit(self):
+        vuh = {}
+        for i in range(1, self.amount):
+            if self.original_chit[i] == 0:
+                vuh[i] = 0
+            else:
+                vuh[i] = float(self.chit[i]) / self.original_chit[i]
+        return vuh
+    
+    def validationRate(self):
+        vr = {}
+        for i in range(1, self.amount):
+            if self.val[i] == 0 and self.inval[i] == 0:
+                vr[i] = 0
+            else:
+                vr[i] = float(self.val[i] / (self.val[i]+self.inval[i]))
+        return vr
+
     def update(self, now):
         for i in range(1, self.amount + 1):
             if now - self.updatetime[i] >= self.staleness:
                 self.updatetime[i] = self.updatetime[i] + self.staleness
+                self.vtime[i] = self.vtime[i] + self.staleness
                 # if i in self.stack:
                 #     self.stack.remove(i)
 
