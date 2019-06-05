@@ -142,7 +142,7 @@ if __name__ == "__main__":
     z = 0.8
     cachesize = 100
     rate = 10
-    staleness = 5
+    staleness = 10
     simulation_time = 10000
     # random.seed(42)
     zipf = Zipf(amount, z)
@@ -179,11 +179,11 @@ if __name__ == "__main__":
         validation_rate_under_hit.append(simulator.cache.validationRateUnderHit()[i])
         validation_rate.append(simulator.cache.validationRate()[i])
     
+    print('%s : %s : %s : %s'%('有效|命中', '有效','有效且命中', '命中'))
     for i in range(0, 11):
-        print(validation_rate_under_hit[i], " : ", validation_rate[i])
-    print("======")
-    for i in range(0, 11):
-        print(validation_rate_under_hit[i]*hit_ratio_sim_original[i] , ' : ', hit_ratio_sim[i])
+        print('%.3f : %.6f : %.6f : %.3f' %(validation_rate_under_hit[i],validation_rate[i], hit_ratio_sim[i],hit_ratio_sim_original[i]) )
+        # print(validation_rate_under_hit[i], " : ", validation_rate[i])
+
 
     plt.plot(index, hit_ratio_sim, "+", label="simulation")
     plt.plot(index, hit_ratio_sim_original, "*", label="simulation-original")

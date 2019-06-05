@@ -32,7 +32,7 @@ class LRUCache(object):
             #self.updatetime[i] = random.uniform(-staleness, 0)
             self.updatetime[i] = random.randint(-staleness+1, 0)
             # self.updatetime[i] = 0
-        self.vtime = self.updatetime
+            self.vtime[i] = random.randint(-staleness+1, 0)
 
 
     def insert0(self, item, now):
@@ -64,26 +64,22 @@ class LRUCache(object):
             self.inval[item] = self.inval[item] + 1
         
         if item in self.stack:
-            if len(self.stack) == self.size:
-                self.original_hit = self.original_hit + 1
-                self.original_chit[item] = self.original_chit[item] + 1
+            self.original_hit = self.original_hit + 1
+            self.original_chit[item] = self.original_chit[item] + 1
             if self.updatetime_in_cache[item] == self.updatetime[item]:
-                if len(self.stack) == self.size:
-                    self.hit = self.hit + 1
-                    self.chit[item] = self.chit[item] + 1
+                self.hit = self.hit + 1
+                self.chit[item] = self.chit[item] + 1
             else:
                 self.updatetime_in_cache[item] = self.updatetime[item]
-                if len(self.stack) == self.size:
-                    self.miss = self.miss + 1
-                    self.cmiss[item] = self.cmiss[item] + 1
+                self.miss = self.miss + 1
+                self.cmiss[item] = self.cmiss[item] + 1
             self.stack.remove(item)
             self.stack.append(item)
         else:
-            if len(self.stack) == self.size:
-                self.miss = self.miss + 1
-                self.cmiss[item] = self.cmiss[item] + 1
-                self.original_miss = self.original_miss + 1
-                self.original_cmiss[item] = self.original_cmiss[item] + 1
+            self.miss = self.miss + 1
+            self.cmiss[item] = self.cmiss[item] + 1
+            self.original_miss = self.original_miss + 1
+            self.original_cmiss[item] = self.original_cmiss[item] + 1
 
             self.updatetime_in_cache[item] = self.updatetime[item]
 
