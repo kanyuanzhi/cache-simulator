@@ -1,7 +1,8 @@
 import random
 
 class LRUCache(object):
-    def __init__(self, size, amount, staleness):
+    def __init__(self, size, amount, staleness, pattern="normal"):
+        # pattern options: normal, reactive, proactive_delete, proactive_update_origin, proactive_update_top 
         self.size = size
         self.amount = amount
         self.staleness = staleness
@@ -17,25 +18,32 @@ class LRUCache(object):
         self.updatetime = {}
         self.updatetime_in_cache = {}
 
-        self.vtime_in_cache = {}
-        self.vtime = {}
-        self.val = {}
-        self.inval = {}
+        self.pattern = pattern
+
+        # self.vtime_in_cache = {}
+        # self.vtime = {}
+        # self.val = {}
+        # self.inval = {}
 
         for i in range(1, amount + 1):
             self.chit[i] = 0
             self.cmiss[i] = 0
             self.original_chit[i] = 0
             self.original_cmiss[i]=0
-            self.val[i] = 0
-            self.inval[i] = 0
+            # self.val[i] = 0
+            # self.inval[i] = 0
             #self.updatetime[i] = random.uniform(-staleness, 0)
             self.updatetime[i] = random.randint(-staleness+1, 0)
             # self.updatetime[i] = 0
-            self.vtime[i] = random.randint(-staleness+1, 0)
+            # self.vtime[i] = random.randint(-staleness+1, 0)
 
+    def insert(self, item):
+        if self.pattern == "reactive":
+            self.insertReactive(item)
+        else:
+            self.insertNormal(item)
 
-    def insert0(self, item, now):
+    def insertNormal(self, item):
         if item in self.stack:
             self.hit = self.hit + 1
             self.chit[item] = self.chit[item] + 1
@@ -52,17 +60,7 @@ class LRUCache(object):
             else:
                 self.stack.append(item)
 
-    def insert(self, item):
-        if item in self.vtime_in_cache:
-            if self.vtime_in_cache[item] == self.vtime[item]:
-                self.val[item] = self.val[item] + 1
-            else:
-                self.inval[item] = self.inval[item] + 1
-                self.vtime_in_cache[item] = self.vtime[item]
-        else:
-            self.vtime_in_cache[item] = self.vtime[item]
-            self.inval[item] = self.inval[item] + 1
-        
+    def insertReactive(self, item):
         if item in self.stack:
             self.original_hit = self.original_hit + 1
             self.original_chit[item] = self.original_chit[item] + 1
@@ -119,28 +117,51 @@ class LRUCache(object):
             else:
                 vuh[i] = float(self.chit[i]) / self.original_chit[i]
         return vuh
+
+    def cacheSize(self):
+        return len(self.stack)
+
     
-    def validationRate(self):
-        vr = {}
-        for i in range(1, self.amount):
-            if self.val[i] == 0 and self.inval[i] == 0:
-                vr[i] = 0
-            else:
-                vr[i] = float(self.val[i] / (self.val[i]+self.inval[i]))
-        return vr
+    # def validationRate(self):
+    #     vr = {}
+    #     for i in range(1, self.amount):
+    #         if self.val[i] == 0 and self.inval[i] == 0:
+    #             vr[i] = 0
+    #         else:
+    #             vr[i] = float(self.val[i] / (self.val[i]+self.inval[i]))
+    #     return vr
 
     def update(self, now):
-        for i in range(1, self.amount + 1):
-            if now - self.updatetime[i] >= self.staleness:
-                self.updatetime[i] = self.updatetime[i] + self.staleness
-                self.vtime[i] = self.vtime[i] + self.staleness
+        if self.pattern == "reactive":
+            for i in range(1, self.amount + 1):
+                if now - self.updatetime[i] >= self.staleness:
+                    self.updatetime[i] = self.updatetime[i] + self.staleness
+                # self.vtime[i] = self.vtime[i] + self.staleness
                 # if i in self.stack:
                 #     self.stack.remove(i)
+        elif self.pattern == "proactive_delete":
+            for i in range(1, self.amount + 1):
+                if now - self.updatetime[i] >= self.staleness:
+                    self.updatetime[i] = self.updatetime[i] + self.staleness
+                    if i in self.stack:
+                        self.stack.remove(i)
+        elif self.pattern == "proactive_update_origin":
+            pass
+        elif self.pattern == "proactive_update_top":
+            for i in range(1, self.amount + 1):
+                if now - self.updatetime[i] >= self.staleness:
+                    self.updatetime[i] = self.updatetime[i] + self.staleness
+                    if i in self.stack:
+                        self.stack.remove(i)
+                        self.stack.append(i)
+        else:
+            pass
+
 
 class Simulator(object):
-    def __init__(self, env, size, amount, staleness, rate, content, popularity):
+    def __init__(self, env, size, amount, staleness, rate, content, popularity, pattern="normal"):
         self.env = env
-        self.cache = LRUCache(size, amount, staleness)
+        self.cache = LRUCache(size, amount, staleness, pattern)
         self.rate = rate
         self.content = content
         self.popularity = popularity
@@ -157,9 +178,11 @@ class Simulator(object):
         while True:
             item = self._random_pick(self.content, self.popularity)
             self.cache.insert(item)
+            # print(self.cache.cacheSize())
             duration = random.expovariate(self.rate)
             if int(self.env.now) % 2000 == 0 and print_flag:
                 print(self.env.now)
+                print(self.cache.cacheSize())
                 print_flag = False
             if int(self.env.now) % 2000 != 0 and not print_flag:
                 print_flag = True
