@@ -92,7 +92,7 @@ class ProactiveRemove(object):
             formula = 0
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                formula = formula + x/Ts*quad(self._F(rate, Ts, x).F2, 0, x)[0] + (1-x/Ts)*(1-exp(-rate*x))
+                formula = formula + quad(self._F(rate, Ts, x).F2, 0, x)[0]/Ts + (1-x/Ts)*(1-exp(-rate*x))
             return formula-self._cachesize
 
         if Tc > Ts:
@@ -104,7 +104,7 @@ class ProactiveRemove(object):
             self._Tc0 = Tc0
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                hit_ratio[i] = Tc0/Ts*quad(self._F(rate, Ts, Tc0).F2, 0, Tc0)[0] + (1-Tc0/Ts)*(1-exp(-rate*Tc0))
+                hit_ratio[i] = quad(self._F(rate, Ts, Tc0).F2, 0, Tc0)[0]/Ts + (1-Tc0/Ts)*(1-exp(-rate*Tc0))
         return hit_ratio
 
         
@@ -137,7 +137,7 @@ class ProactiveRemove(object):
             return (1-exp(-self._rate*t))/self._Ts
 
         def F2(self, t):
-            return (1-exp(-self._rate*t))/self._Tc
+            return 1-exp(-self._rate*t)
 
 class ProactiveRenew(object):
     def __init__(self, amount, cachesize, total_rate, Ts, popularity):

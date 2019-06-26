@@ -106,7 +106,7 @@ class ProactiveRemoveExponential(object):
             for i in range(1, self._amount + 1):
                 rate = self._rate[i]
                 F = self._F(rate, ev, x)
-                formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, 2 * ev)[0] + quad(F.F3, x, 2 * ev)[0]
+                formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, float("inf"))[0] + quad(F.F3, x, float("inf"))[0]
             return formula - self._cachesize
 
         Tc0 = fsolve(f, [1])[0]
@@ -115,8 +115,8 @@ class ProactiveRemoveExponential(object):
             rate = self._rate[i]
             F = self._F(rate, ev, Tc0)
             a = quad(F.F1, 0, Tc0)
-            b = quad(F.F2, Tc0, oo)
-            c = quad(F.F3, Tc0, oo)
+            b = quad(F.F2, Tc0, float("inf"))
+            c = quad(F.F3, Tc0, float("inf"))
             hit_ratio[i] = a[0] + b[0] + c[0]
         return hit_ratio
 
@@ -139,19 +139,19 @@ class ProactiveRemoveExponential(object):
         return self._total_rate * (1 - self.totalHitRatio())
 
     class _F(object):
-        def __init__(self, rate, expeted_value, Tc):
+        def __init__(self, rate, expected_value, Tc):
             self._rate = rate
-            self._ev = expeted_value
+            self._ev = expected_value
             self._Tc = Tc
 
         def F1(self, Tv):
-            return (Tv + exp(-self._rate * Tv)/self._rate - 1/self._rate) / (2 * self._ev * self._ev)
+            return (Tv + exp(-self._rate * Tv)/self._rate - 1/self._rate) * exp(-Tv/self._ev) / (self._ev * self._ev)
 
         def F2(self, Tv):
-            return (self._Tc + exp(-self._rate * self._Tc)/self._rate - 1/self._rate) / (2 * self._ev * self._ev)
+            return (self._Tc + exp(-self._rate * self._Tc)/self._rate - 1/self._rate) * exp(-Tv/self._ev) / (self._ev * self._ev)
         
         def F3(self, Tv):
-            return (Tv - self._Tc) * (1 - exp(-self._rate * self._Tc)) / (2 * self._ev * self._ev)
+            return (Tv - self._Tc) * (1 - exp(-self._rate * self._Tc)) * exp(-Tv/self._ev) / (self._ev * self._ev)
 
 
 class ProactiveRenewExponential(object):

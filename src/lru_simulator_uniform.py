@@ -36,8 +36,8 @@ class LRUCache(object):
             self.original_chit[i] = 0
             self.original_cmiss[i]=0
             self.validation_time[i] = random.uniform(0, 2*self.staleness)
-            # self.updatetime[i] = random.uniform(-self.validation_time[i], 0)
-            self.updatetime[i] = 0
+            self.updatetime[i] = random.uniform(-self.validation_time[i], 0)
+            # self.updatetime[i] = 0
             self.pub_load_c[i] = 0
 
     def insert(self, item, now):
@@ -202,7 +202,7 @@ class SimulatorUniform(object):
     def updateSim(self):
         while True:
             self.cache.update(self.env.now)
-            duration = 1
+            duration = 0.1
             yield self.env.timeout(duration)
 
 
@@ -216,6 +216,7 @@ class SimulatorUniform(object):
             if int(self.env.now) % 2000 == 0 and print_flag:
                 print(self.env.now)
                 print(self.cache.cacheSize())
+                print(self.cache.totalHitRatio())
                 print_flag = False
             if int(self.env.now) % 2000 != 0 and not print_flag:
                 print_flag = True

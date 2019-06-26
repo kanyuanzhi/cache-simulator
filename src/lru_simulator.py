@@ -37,7 +37,7 @@ class LRUCache(object):
             self.original_cmiss[i]=0
             # self.val[i] = 0
             # self.inval[i] = 0
-            #self.updatetime[i] = random.uniform(-staleness, 0)
+            # self.updatetime[i] = random.uniform(-staleness, 0)
             self.updatetime[i] = random.randint(-staleness+1, 0)
             # self.updatetime[i] = 0
             # self.vtime[i] = random.randint(-staleness+1, 0)
@@ -212,6 +212,7 @@ class Simulator(object):
             if int(self.env.now) % 2000 == 0 and print_flag:
                 print(self.env.now)
                 print(self.cache.cacheSize())
+                print(self.cache.totalHitRatio())
                 print_flag = False
             if int(self.env.now) % 2000 != 0 and not print_flag:
                 print_flag = True

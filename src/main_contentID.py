@@ -10,46 +10,70 @@ from lru_simulator_exponential import SimulatorExponential
 
 from model import Reactive, ProactiveRemove, ProactiveRenew
 from model_uniform import ReactiveUniform, ProactiveRemoveUniform
-from model_uniform_exponential import ReactiveExponential, ProactiveRemoveExponential
+from model_exponential import ReactiveExponential, ProactiveRemoveExponential
 
 if __name__ == "__main__":
 
     amount = 5000
     z = 0.8
-    cachesize = 100
-    total_rate = 20
-    expected_value = 10
-    simulation_time = 10000
+    cachesize = 50
+    total_rate = 10
+    expected_value = 20
+    simulation_time = 50000
     # random.seed(42)
     zipf = Zipf(amount, z)
 
-    pattern = "reactive"
+    # pattern = "reactive"
     # pattern = "proactive_remove"
-    # pattern = "proactive_renew"
+    pattern = "proactive_renew"
     # pattern = "proactive_update_origin"
 
     popularity_dict = zipf.popularity()
     content = [i for i in range(1, amount + 1)]
     popularity = [popularity_dict[i] for i in range(1, amount)]
 
+    # # reactive = Reactive(amount, cachesize, total_rate, expected_value,
+    # #                     popularity_dict)
+    # reactive = ReactiveUniform(amount, cachesize, total_rate, expected_value,
+    #                     popularity_dict)
+    # # reactive = ReactiveExponential(amount, cachesize, total_rate, expected_value,
+    # #                            popularity_dict)
+    # print("model: ", reactive.totalHitRatio())
+    # print("Tc: ", reactive.Che().T)
+    # print("model ready!")
+
+    # proactive = ProactiveRemove(amount, cachesize, total_rate, expected_value,
+    #                     popularity_dict)
+    # # proactive = ProactiveRemoveUniform(amount, cachesize, total_rate, expected_value,
+    # #                     popularity_dict)
+    # # proactive = ProactiveRemoveExponential(amount, cachesize, total_rate, expected_value,
+    # #                            popularity_dict)
+    # print("model: ", proactive.totalHitRatio())
+    # print("Tc: ", proactive.Che().T)
+    # print("Tc0: ", proactive.Tc0())
+    # print("model ready!")
+
+    proactive = ProactiveRenew(amount, cachesize, total_rate, expected_value,
+                        popularity_dict)
+    print("model: ", proactive.totalHitRatio())
+    print("Tc: ", proactive.Che().T)
+    print("model ready!")
+
     env = simpy.Environment()
     simulator = Simulator(env, cachesize, amount, expected_value, total_rate,
                           content, popularity, pattern)
     # simulator = SimulatorUniform(env, cachesize, amount, expected_value, total_rate,
     #                       content, popularity, pattern)
+    # simulator = SimulatorExponential(env, cachesize, amount, expected_value, total_rate,
+    #                              content, popularity, pattern)
     env.process(simulator.updateSim())
     env.process(simulator.insertSim())
     env.run(until=simulation_time)
     print("simulation: ", simulator.cache.totalHitRatio())
 
-    reactive = Reactive(amount, cachesize, total_rate, expected_value,
-                        popularity_dict)
-    # reactive = ReactiveUniform(amount, cachesize, total_rate, expected_value,
-    #                     popularity_dict)
-    
-    print("model: ", reactive.totalHitRatio())
-    print("Tc: ", reactive.Che().T)
-    print("model ready!")
+    print("error: ", (simulator.cache.totalHitRatio()-proactive.totalHitRatio())/simulator.cache.totalHitRatio())
+
+
     # reactive_uniform = ReactiveUniform(amount,cachesize,total_rate,expected_value,popularity_dict)
     # print("reactive uniform ready!")
     # reactive_exponential = ReactiveExponential(amount, cachesize, total_rate, expected_value, popularity_dict)
@@ -63,24 +87,24 @@ if __name__ == "__main__":
     for i in range(1, 51):
         index.append(i)
         hit_ratio_sim.append(simulator.cache.hitRatio()[i])
-        hit_ratio_model.append(reactive.hitRatio()[i])
+        # hit_ratio_model.append(reactive.hitRatio()[i])
+        hit_ratio_model.append(proactive.hitRatio()[i])
+
         # hit_ratio_model_uniform.append(reactive_uniform.hitRatio()[i])
         # hit_ratio_model_exponential.append(reactive_exponential.hitRatio()[i])
 
     font1 = {
-        'family': 'Times New Roman',
-        'weight': 'normal',
+        'family': 'Arial',
         'size': 13,
     }
 
     font2 = {
-        'family': 'Times New Roman',
-        'weight': 'normal',
+        'family': 'Arial',
         'size': 15,
     }
 
-    plt.plot(index, hit_ratio_sim, "+", color="black", label="simulation")
-    plt.plot(index, hit_ratio_model, color="black",linewidth="1", label="model")
+    plt.plot(index, hit_ratio_sim, "+", color="orangered",ms="6", label="simulation")
+    plt.plot(index, hit_ratio_model, color="steelblue", linewidth="1.5", label="model")
     # plt.plot(index, hit_ratio_model_uniform, label="model-uniform")
     # plt.plot(index, hit_ratio_model_exponential, label="model-exponential")
 

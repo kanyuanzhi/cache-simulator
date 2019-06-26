@@ -216,6 +216,7 @@ class SimulatorExponential(object):
             if int(self.env.now) % 2000 == 0 and print_flag:
                 print(self.env.now)
                 print(self.cache.cacheSize())
+                print(self.cache.totalHitRatio())
                 print_flag = False
             if int(self.env.now) % 2000 != 0 and not print_flag:
                 print_flag = True

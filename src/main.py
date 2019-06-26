@@ -7,7 +7,7 @@ from mcav.zipf import Zipf
 from lru_simulator import Simulator
 from lru_simulator_uniform import SimulatorUniform
 from scipy import integrate
-from model import Reactive, ProactiveRemove, ProactivePublish
+from model import Reactive, ProactiveRemove, ProactiveRemove
 
 from model_uniform import ReactiveUniform, ProactiveRemoveUniform
 
