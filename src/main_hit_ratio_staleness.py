@@ -45,19 +45,24 @@ if __name__ == "__main__":
     hit_ratio_model_reactive = []
     hit_ratio_model_proactive_remove = []
     hit_ratio_model_proactive_renew = []
-    for expected_value in (1, 21):
+    for expected_value in range(2, 21, 2):
         index.append(expected_value)
-        reactive = Reactive(amount, cachesize, total_rate, expected_value,
+        reactive = ReactiveUniform(amount, cachesize, total_rate, expected_value,
                             popularity_dict)
         hit_ratio_model_reactive.append(reactive.totalHitRatio())
+        print("reactive ready!")
 
-        proactive_remove = ProactiveRemove(amount, cachesize, total_rate, expected_value,
+        proactive_remove = ProactiveRemoveUniform(amount, cachesize, total_rate, expected_value,
                             popularity_dict)
         hit_ratio_model_proactive_remove.append(proactive_remove.totalHitRatio())
+        print("proactive_remove ready!")
 
         proactive_renew = ProactiveRenew(amount, cachesize, total_rate, expected_value,
                                    popularity_dict)
         hit_ratio_model_proactive_renew.append(proactive_renew.totalHitRatio())
+        print("proactive_renew ready!")
+
+        print(expected_value)
 
     # plt.plot(index, hit_ratio_sim, "+", color="orangered", ms="6", label="simulation")
     plt.plot(index, hit_ratio_model_reactive, color="steelblue", linewidth="1.5", label="model: reactive")
@@ -70,7 +75,7 @@ if __name__ == "__main__":
     plt.xlabel("staleness time", font1)
     plt.ylabel("hit probability", font1)
     plt.grid(True)
-    plt.axis([0, 41, 0, 0.2], font1)
+    # plt.axis([0, 41, 0, 0.2], font1)
     plt.legend(prop=font1)
     # plt.savefig("kan6.eps")
     plt.show()
