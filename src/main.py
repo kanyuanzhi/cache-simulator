@@ -16,8 +16,8 @@ if __name__ == "__main__":
     amount = 5000
     z = 0.8
     cachesize = 50
-    total_rate = 10
-    Ts = 14
+    total_rate = 20
+    Ts = 4
     simulation_time = 10000
     # random.seed(42)
     zipf = Zipf(amount, z)
@@ -32,23 +32,23 @@ if __name__ == "__main__":
     popularity = [popularity_dict[i] for i in range(1, amount)]
 
     
-    env = simpy.Environment()
-    simulator = Simulator(env, cachesize, amount, Ts, total_rate, content,
-                          popularity, pattern)
-    env.process(simulator.updateSim())
-    env.process(simulator.insertSim())
-    env.run(until=simulation_time)
-    print("simulation: ", simulator.cache.totalHitRatio())
+    # env = simpy.Environment()
+    # simulator = Simulator(env, cachesize, amount, Ts, total_rate, content,
+    #                       popularity, pattern)
+    # env.process(simulator.updateSim())
+    # env.process(simulator.insertSim())
+    # env.run(until=simulation_time)
+    # print("simulation: ", simulator.cache.totalHitRatio())
     # print("pub load: ", simulator.cache.pubLoad()/10000.0)
     # print("total load: ", simulator.cache.totalLoad()/10000.0)
 
-    # env = simpy.Environment()
-    # simulator_uniform = SimulatorUniform(env, cachesize, amount, Ts, total_rate, content,
-    #                       popularity, pattern)
-    # env.process(simulator_uniform.updateSim())
-    # env.process(simulator_uniform.insertSim())
-    # env.run(until=simulation_time)
-    # print("simulation-uniform: ", simulator_uniform.cache.totalHitRatio())
+    env = simpy.Environment()
+    simulator_uniform = SimulatorUniform(env, cachesize, amount, Ts, total_rate, content,
+                          popularity, pattern)
+    env.process(simulator_uniform.updateSim())
+    env.process(simulator_uniform.insertSim())
+    env.run(until=simulation_time)
+    print("simulation-uniform: ", simulator_uniform.cache.totalHitRatio())
     # print("pub load: ", simulator.cache.pubLoad()/10000.0)
     # print("total load: ", simulator.cache.totalLoad()/10000.0)
 
@@ -59,17 +59,17 @@ if __name__ == "__main__":
     # reactive_uniform = ReactiveUniform(amount,cachesize,total_rate,Ts,popularity_dict)
     # print("model-reactive-uniform: ", reactive_uniform.totalHitRatio())
 
-    proactive_remove = ProactiveRemove(amount,cachesize,total_rate,Ts,popularity_dict)
-    print("model-proactive-remove: ", proactive_remove.totalHitRatio())
-    print("Tc: ", proactive_remove.Che().T)
-    print("Tc0: ", proactive_remove.Tc0())
-    print("model-che: ", proactive_remove.Che().totalHitRatio())
+    # proactive_remove = ProactiveRemove(amount,cachesize,total_rate,Ts,popularity_dict)
+    # print("model-proactive-remove: ", proactive_remove.totalHitRatio())
+    # print("Tc: ", proactive_remove.Che().T)
+    # print("Tc0: ", proactive_remove.Tc0())
+    # print("model-che: ", proactive_remove.Che().totalHitRatio())
 
-    # proactive_remove_uniform = ProactiveRemoveUniform(amount,cachesize,total_rate,Ts,popularity_dict)
-    # print("model-proactive-remove-uniform: ", proactive_remove_uniform.totalHitRatio())
-    # print("Tc: ", proactive_remove_uniform.Che().T)
-    # print("Tc0: ", proactive_remove_uniform.Tc0())
-    # print("model-che: ", proactive_remove_uniform.Che().totalHitRatio())
+    proactive_remove_uniform = ProactiveRemoveUniform(amount,cachesize,total_rate,Ts,popularity_dict)
+    print("model-proactive-remove-uniform: ", proactive_remove_uniform.totalHitRatio())
+    print("Tc: ", proactive_remove_uniform.Che().T)
+    print("Tc0: ", proactive_remove_uniform.Tc0())
+    print("model-che: ", proactive_remove_uniform.Che().totalHitRatio())
 
     
 
@@ -101,15 +101,15 @@ if __name__ == "__main__":
     index = []
     for i in range(1, 51):
         index.append(i)
-        hit_ratio_sim.append(simulator.cache.hitRatio()[i])
-        # hit_ratio_sim_uniform.append(simulator_uniform.cache.hitRatio()[i])
+        # hit_ratio_sim.append(simulator.cache.hitRatio()[i])
+        hit_ratio_sim_uniform.append(simulator_uniform.cache.hitRatio()[i])
 
         # hit_ratio_sim_original.append(simulator.cache.originalHitRatio()[i])
         # hit_ratio_model_reactive.append(reactive.hitRatio()[i])
         # hit_ratio_model_reactive_uniform.append(reactive_uniform.hitRatio()[i])
         # hit_ratio_model_original.append(reactive.Che().hitRatio()[i])
-        hit_ratio_model_proactive_remove.append(proactive_remove.hitRatio()[i])
-        # hit_ratio_model_proactive_remove_uniform.append(proactive_remove_uniform.hitRatio()[i])
+        # hit_ratio_model_proactive_remove.append(proactive_remove.hitRatio()[i])
+        hit_ratio_model_proactive_remove_uniform.append(proactive_remove_uniform.hitRatio()[i])
         # hit_ratio_model_pp.append(proactive_publish.hitRatio()[i])
         # validation_rate_under_hit.append(simulator.cache.validationRateUnderHit()[i])
         # validation_rate.append(simulator.cache.validationRate()[i])
@@ -122,16 +122,16 @@ if __name__ == "__main__":
         # print(validation_rate_under_hit[i], " : ", validation_rate[i])
 
 
-    plt.plot(index, hit_ratio_sim, "*",color="black", label="simulation")
-    # plt.plot(index, hit_ratio_sim_uniform, "+",color="black", label="simulation-uniform")
+    # plt.plot(index, hit_ratio_sim, "*",color="black", label="simulation")
+    plt.plot(index, hit_ratio_sim_uniform, "+",color="black", label="simulation-uniform")
 
     # plt.plot(index, hit_ratio_sim_original, "*", label="simulation-original")
     # plt.plot(index, hit_ratio_model_reactive, label="model-reactive")
     # plt.plot(index, hit_ratio_model_reactive_uniform, label="model-reactive-uniform")
 
     # plt.plot(index, hit_ratio_model_original, label="model-original")
-    plt.plot(index, hit_ratio_model_proactive_remove, label="model-proactive-remove")
-    # plt.plot(index, hit_ratio_model_proactive_remove_uniform, label="model-proactive-remove-uniform")
+    # plt.plot(index, hit_ratio_model_proactive_remove, label="model-proactive-remove")
+    plt.plot(index, hit_ratio_model_proactive_remove_uniform, label="model-proactive-remove-uniform")
     # plt.plot(index, hit_ratio_model_pp, label="model-proactive-publish")
     # plt.plot(index, pub_load_sim,"+", label="simulation")
     # plt.plot(index, pub_load_model, label="model")
