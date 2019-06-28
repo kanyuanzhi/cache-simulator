@@ -166,7 +166,8 @@ class LRUCache(object):
         elif self.pattern == "proactive_renew":
             for i in range(1, self.amount + 1):
                 if now - self.updatetime[i] >= self.staleness:
-                    self.updatetime[i] = self.updatetime[i] + self.staleness
+                    self.updatetime[i] = now
+                    self.validation_time[i] = random.uniform(0, 2 * self.staleness)
                     if i in self.stack:
                         # self.stack.remove(i)
                         # self.stack.append(i)

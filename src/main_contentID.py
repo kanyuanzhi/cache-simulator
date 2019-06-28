@@ -16,9 +16,9 @@ if __name__ == "__main__":
 
     amount = 5000
     z = 0.8
-    cachesize = 50
+    cachesize = 100
     total_rate = 20
-    expected_value = 4
+    expected_value = 20
     simulation_time = 10000
     # random.seed(42)
     zipf = Zipf(amount, z)

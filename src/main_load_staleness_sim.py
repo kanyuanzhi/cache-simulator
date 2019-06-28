@@ -28,7 +28,7 @@ if __name__ == "__main__":
     cachesize = 50
     total_rate = 20
     # expected_value = 20
-    simulation_time = 50000
+    simulation_time = 10000
     # random.seed(42)
     zipf = Zipf(amount, z)
 
@@ -41,22 +41,10 @@ if __name__ == "__main__":
     content = [i for i in range(1, amount + 1)]
     popularity = [popularity_dict[i] for i in range(1, amount)]
 
-    # env = simpy.Environment()
-    # simulator = Simulator(env, cachesize, amount, expected_value, total_rate,
-    #                       content, popularity, pattern)
-    # # simulator = SimulatorUniform(env, cachesize, amount, expected_value, total_rate,
-    # #                       content, popularity, pattern)
-    # # simulator = SimulatorExponential(env, cachesize, amount, expected_value, total_rate,
-    # #                              content, popularity, pattern)
-    # env.process(simulator.updateSim())
-    # env.process(simulator.insertSim())
-    # env.run(until=simulation_time)
-    # print("simulation: ", simulator.cache.totalHitRatio())
-
     index = []
     hit_ratio_model_reactive = []
     hit_ratio_model_proactive_remove = []
-    hit_ratio_model_proactive_renew = []
+    load_sim_proactive_renew = []
     for expected_value in range(4, 41, 2):
         index.append(expected_value)
         env = simpy.Environment()
@@ -69,27 +57,16 @@ if __name__ == "__main__":
         env.process(simulator.updateSim())
         env.process(simulator.insertSim())
         env.run(until=simulation_time)
-        hit_ratio_model_reactive.append(simulator.cache.totalHitRatio())
-        # print("reactive ready!")
-        #
-        # proactive_remove = ProactiveRemoveUniform(amount, cachesize, total_rate, expected_value,
-        #                     popularity_dict)
-        # hit_ratio_model_proactive_remove.append(proactive_remove.totalHitRatio())
-        # print("proactive_remove ready!")
-        #
-        # proactive_renew = ProactiveRenew(amount, cachesize, total_rate, expected_value,
-        #                            popularity_dict)
-        # hit_ratio_model_proactive_renew.append(proactive_renew.totalHitRatio())
-        # print("proactive_renew ready!")
+        load_sim_proactive_renew.append(simulator.cache.totalLoad()/10000)
 
         print(expected_value)
 
-    print(hit_ratio_model_reactive)
+    print(load_sim_proactive_renew)
     # print(hit_ratio_model_proactive_remove)
     # print(hit_ratio_model_proactive_renew)
 
     # plt.plot(index, hit_ratio_sim, "+", color="orangered", ms="6", label="simulation")
-    plt.plot(index, hit_ratio_model_reactive, color="steelblue", linewidth="1.5", label="model: reactive")
+    plt.plot(index, load_sim_proactive_renew, color="steelblue", linewidth="1.5", label="model: reactive")
     # plt.plot(index, hit_ratio_model_proactive_remove, color="darkorange", linewidth="1.5", label="model: proactive remove")
     # plt.plot(index, hit_ratio_model_proactive_renew, color="darkgreen", linewidth="1.5", label="model: proactive renew")
 
@@ -97,7 +74,7 @@ if __name__ == "__main__":
     # plt.plot(index, hit_ratio_model_exponential, label="model-exponential")
 
     plt.xlabel("staleness time", font1)
-    plt.ylabel("hit probability", font1)
+    plt.ylabel("load", font1)
     plt.grid(True)
     # plt.axis([0, 41, 0, 0.2], font1)
     plt.legend(prop=font1)

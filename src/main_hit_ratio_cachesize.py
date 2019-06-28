@@ -28,7 +28,7 @@ if __name__ == "__main__":
     z = 0.8
     cachesize = 50
     total_rate = 20
-    # expected_value = 20
+    expected_value = 20
     simulation_time = 50000
     # random.seed(42)
     zipf = Zipf(amount, z)
@@ -46,8 +46,8 @@ if __name__ == "__main__":
     hit_ratio_model_reactive = []
     hit_ratio_model_proactive_remove = []
     hit_ratio_model_proactive_renew = []
-    for expected_value in np.arange(2, 41, 0.5):
-        index.append(expected_value)
+    for cachesize in np.arange(155, 251, 5):
+        index.append(cachesize)
         reactive = ReactiveUniform(amount, cachesize, total_rate, expected_value,
                             popularity_dict)
         hit_ratio_model_reactive.append(reactive.totalHitRatio())
@@ -63,7 +63,7 @@ if __name__ == "__main__":
         hit_ratio_model_proactive_renew.append(proactive_renew.totalHitRatio())
         print("proactive_renew ready!")
 
-        print(expected_value)
+        print(cachesize)
 
     print(hit_ratio_model_reactive)
     print(hit_ratio_model_proactive_remove)

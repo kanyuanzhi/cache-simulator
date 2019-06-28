@@ -27,8 +27,8 @@ if __name__ == "__main__":
     z = 0.8
     cachesize = 50
     total_rate = 20
-    # expected_value = 20
-    simulation_time = 50000
+    expected_value = 20
+    simulation_time = 10000
     # random.seed(42)
     zipf = Zipf(amount, z)
 
@@ -54,22 +54,22 @@ if __name__ == "__main__":
     # print("simulation: ", simulator.cache.totalHitRatio())
 
     index = []
-    hit_ratio_model_reactive = []
-    hit_ratio_model_proactive_remove = []
-    hit_ratio_model_proactive_renew = []
-    for expected_value in range(4, 41, 2):
-        index.append(expected_value)
+    load_model_reactive = []
+    load_model_proactive_remove = []
+    load_model_proactive_renew = []
+    for cachesize in range(10, 251, 10):
+        index.append(cachesize)
         env = simpy.Environment()
         simulator = Simulator(env, cachesize, amount, expected_value, total_rate,
                               content, popularity, "proactive_renew")
         # simulator = SimulatorUniform(env, cachesize, amount, expected_value, total_rate,
-        #                       content, popularity, "proactive_remove")
+        #                       content, popularity, "reactive")
         # simulator = SimulatorExponential(env, cachesize, amount, expected_value, total_rate,
         #                              content, popularity, pattern)
         env.process(simulator.updateSim())
         env.process(simulator.insertSim())
         env.run(until=simulation_time)
-        hit_ratio_model_reactive.append(simulator.cache.totalHitRatio())
+        load_model_proactive_renew.append(simulator.cache.totalLoad()/10000.0)
         # print("reactive ready!")
         #
         # proactive_remove = ProactiveRemoveUniform(amount, cachesize, total_rate, expected_value,
@@ -82,21 +82,21 @@ if __name__ == "__main__":
         # hit_ratio_model_proactive_renew.append(proactive_renew.totalHitRatio())
         # print("proactive_renew ready!")
 
-        print(expected_value)
+        print(cachesize)
 
-    print(hit_ratio_model_reactive)
+    print(load_model_proactive_renew)
     # print(hit_ratio_model_proactive_remove)
     # print(hit_ratio_model_proactive_renew)
 
     # plt.plot(index, hit_ratio_sim, "+", color="orangered", ms="6", label="simulation")
-    plt.plot(index, hit_ratio_model_reactive, color="steelblue", linewidth="1.5", label="model: reactive")
+    plt.plot(index, load_model_proactive_renew, color="steelblue", linewidth="1.5", label="model: reactive")
     # plt.plot(index, hit_ratio_model_proactive_remove, color="darkorange", linewidth="1.5", label="model: proactive remove")
     # plt.plot(index, hit_ratio_model_proactive_renew, color="darkgreen", linewidth="1.5", label="model: proactive renew")
 
     # plt.plot(index, hit_ratio_model_uniform, label="model-uniform")
     # plt.plot(index, hit_ratio_model_exponential, label="model-exponential")
 
-    plt.xlabel("staleness time", font1)
+    plt.xlabel("cache size", font1)
     plt.ylabel("hit probability", font1)
     plt.grid(True)
     # plt.axis([0, 41, 0, 0.2], font1)
