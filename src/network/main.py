@@ -21,19 +21,22 @@ if __name__ == "__main__":
 
     # random.seed(42)
 
-    # pattern = "reactive"
+    pattern = "reactive"
     # pattern = "proactive_remove"
-    pattern = "proactive_renew"
+    # pattern = "proactive_renew"
 
-    network = Network(expected_value)
+    network = Network(amount, expected_value, simulation_time, pattern)
 
-    node1 = Node(cachesize, network, "root", 1)
-    node2 = Node(cachesize, network, "router", 2)
-    node3 = Node(cachesize, network, "router", 3)
-    node4 = Node(cachesize, network, "leaf", 4)
-    node5 = Node(cachesize, network, "leaf", 5)
-    node6 = Node(cachesize, network, "leaf", 6)
-    node7 = Node(cachesize, network, "leaf", 7)
+    node1 = Node(cachesize, network, "root", pattern, 1)
+    node2 = Node(cachesize, network, "router", pattern, 2)
+    node3 = Node(cachesize, network, "router", pattern, 3)
+    node4 = Node(cachesize, network, "leaf", pattern, 4)
+    node5 = Node(cachesize, network, "leaf", pattern, 5)
+    node6 = Node(cachesize, network, "leaf", pattern, 6)
+    node7 = Node(cachesize, network, "leaf", pattern, 7)
+
+    nodes = [node1, node2, node3, node4, node5, node6, node7]
+    network.registerNodes(nodes)
 
     node2.nextNode(node1)
     node3.nextNode(node1)
@@ -62,9 +65,9 @@ if __name__ == "__main__":
     env.process(network_sim.update())
 
     env.run(until=simulation_time)
+
+    print(network.totalHitRatio())
+
+    print(network.totalLoad())
     
-
-
-    
-
     print(network.hit)

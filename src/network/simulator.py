@@ -41,11 +41,11 @@ class NetworkSim(object):
     def update(self):
         print_flag = True
         while True:
-            # self.network.update(self.env.now)
+            self.network.update(self.env.now)
             duration = 1
             if int(self.env.now) % 2000 == 0 and print_flag:
                 print(self.env.now)
-                if self.env.now>1:
+                if self.env.now > 1:
                     print(self.network.miss/self.env.now)
                 print_flag = False
             if int(self.env.now) % 2000 != 0 and not print_flag:
