@@ -4,6 +4,7 @@ class Network(object):
         self.amount = amount
         self.staleness = staleness
         self.simulation_time = simulation_time
+        self.pattern = pattern
 
         self.nodes = None
         self.hit = 0
@@ -51,10 +52,14 @@ class Network(object):
                 if now - self.updatetime[i] >= self.staleness:
                     self.updatetime[i] = now
                     self.validation_time[i] = random.uniform(0, 2 * self.staleness)
+                    flag = False
                     for node in self.nodes:
                         if i in node.stack:
-                            self.pub_load = self.pub_load + 1
-                            break
+                            flag = True
+                            node.stack.remove(i)
+                            node.stack.append(i)
+                    if flag:
+                        self.pub_load = self.pub_load + 1
                     # if i in self.stack:
                     #     # self.stack.remove(i)
                     #     # self.stack.append(i)

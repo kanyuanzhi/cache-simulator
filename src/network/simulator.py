@@ -43,12 +43,14 @@ class NetworkSim(object):
         while True:
             self.network.update(self.env.now)
             duration = 1
-            if int(self.env.now) % 2000 == 0 and print_flag:
+            if int(self.env.now) % 500 == 0 and print_flag:
                 print(self.env.now)
                 if self.env.now > 1:
-                    print(self.network.miss/self.env.now)
+                    print((self.network.miss+self.network.pub_load)/self.env.now)
+                    print(self.network.totalHitRatio())
+                    print(len(self.network.nodes[6].stack))
                 print_flag = False
-            if int(self.env.now) % 2000 != 0 and not print_flag:
+            if int(self.env.now) % 500 != 0 and not print_flag:
                 print_flag = True
             yield self.env.timeout(duration)
 

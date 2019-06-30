@@ -46,7 +46,7 @@ if __name__ == "__main__":
     hit_ratio_model_reactive = []
     hit_ratio_model_proactive_remove = []
     hit_ratio_model_proactive_renew = []
-    for cachesize in np.arange(155, 251, 5):
+    for cachesize in np.arange(4, 9, 1):
         index.append(cachesize)
         reactive = ReactiveUniform(amount, cachesize, total_rate, expected_value,
                             popularity_dict)

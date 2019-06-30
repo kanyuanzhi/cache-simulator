@@ -47,7 +47,8 @@ if __name__ == "__main__":
     plt.plot(index_model, hit_ratio_model_proactive_renew,"-", color="black", linewidth="1", label="model: proactive invalidation with renewing")
     plt.plot(index_model, hit_ratio_model_proactive_remove,":", color="black", linewidth="1", label="model: proactive invalidation with removing")
     plt.plot(index_model, hit_ratio_model_reactive, "-.", color="black", linewidth="1", label="model: reactive invalidation")
-
+    plt.axhline(y=0.2628683796750622,ls="--",xmin=0, xmax=300,color="black", label="validation probability")
+    plt.text(3, 0.27, "$0.263$")
 
     # plt.plot(index, hit_ratio_model_uniform, label="model-uniform")
     # plt.plot(index, hit_ratio_model_exponential, label="model-exponential")

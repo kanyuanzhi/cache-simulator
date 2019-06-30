@@ -31,6 +31,9 @@ class ValidationUniform(object):
             validation_ratio[i] = quad(self._F(rate, ev).F1, 0, 2 * ev)[0]
         return validation_ratio
 
+    def validationSize(self):
+        return sum(list(self._validation_ratio.values()))
+
     def validationRatio(self):
         return self._validation_ratio
 
@@ -50,29 +53,31 @@ class ValidationUniform(object):
 
 
 if __name__ == "__main__":
-    amount = 5000
+    amount = 10000
     z = 0.8
     cachesize = 50
     total_rate = 20
-    expected_value = 20
+    expected_value = 10
 
     zipf = Zipf(amount, z)
     popularity = zipf.popularity()
+    validation_uniform = ValidationUniform(amount,total_rate,expected_value,popularity)
 
-    print(ValidationUniform(amount,total_rate,expected_value,popularity).totalValidationRatio())
+    print(validation_uniform.totalValidationRatio())
 
     
-    # index = []
-    # result = []
+    index = []
+    result = []
+    print(validation_uniform.validationSize())
     # for expected_value in range(4, 41):
     #     index.append(expected_value)
-
+    #
     #     validation = ValidationUniform(amount,total_rate,expected_value,popularity)
     #     result.append(validation.totalValidationRatio())
-
+    #
     #     print(expected_value)
-
-
+    #
+    #
     # plt.plot(index, result, "+-", label="simulation")
     # plt.xlabel("content ID")
     # plt.ylabel("validation ratio")

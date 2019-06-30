@@ -40,7 +40,10 @@ class Node(object):
                     self.updatetime_in_cache[item] = self.network.updatetime[item]
                     self.validation_time_in_cache[item] = self.network.validation_time[item]
                     self.miss = self.miss + 1
-                    self.next_node.insert(item, now)
+                    if self.type == "root":
+                        self.network.missCount()
+                    else:
+                        self.next_node.insert(item, now)
                 self.stack.remove(item)
                 self.stack.append(item)
             else:

@@ -14,7 +14,7 @@ from model_exponential import ReactiveExponential, ProactiveRemoveExponential
 
 if __name__ == "__main__":
 
-    amount = 5000
+    amount = 10000
     z = 0.8
     cachesize = 100
     total_rate = 20

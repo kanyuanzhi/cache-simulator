@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from mcav.zipf import Zipf
 from che import Che
 from math import exp
+from model_validation import ValidationUniform
 
 
 class ReactiveUniform(object):
@@ -91,7 +92,9 @@ class ProactiveRemoveUniform(object):
         self._ev = expected_value
         self._Tc0 = 0
         self._rate = self._requestRate()
+        self._validation_size = ValidationUniform(amount,total_rate,expected_value,popularity).validationSize()
         self._hit_ratio = self._hitRatio()
+
 
     def _requestRate(self):
         rr = {}
@@ -106,12 +109,14 @@ class ProactiveRemoveUniform(object):
 
         def f(x):
             formula = 0
-            
             for i in range(1, self._amount + 1):
                 rate = self._rate[i]
                 F = self._F(rate, ev, x)
                 formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, 2 * ev)[0] + quad(F.F3, x, 2 * ev)[0]
-            return formula - self._cachesize
+            if self._cachesize < self._validation_size:
+                return formula - self._cachesize
+            else:
+                return formula - self._validation_size
 
         Tc0 = fsolve(f, [1])[0]
         self._Tc0 = Tc0
