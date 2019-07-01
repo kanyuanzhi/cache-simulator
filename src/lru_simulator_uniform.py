@@ -1,8 +1,8 @@
 import random
 
 class LRUCache(object):
-    def __init__(self, size, amount, staleness, pattern="normal"):
-        # pattern options: normal, reactive, proactive_remove, proactive_renew, proactive_update_top 
+    def __init__(self, size, amount, staleness, pattern="normal", N=20):
+        # pattern options: normal, reactive, proactive_remove, proactive_renew, proactive_optional_renew
         self.size = size
         self.amount = amount
         self.staleness = staleness # expected value
@@ -21,6 +21,7 @@ class LRUCache(object):
         self.validation_time_in_cache = {}
 
         self.pattern = pattern
+        self.N = N
 
         self.pub_load = 0
         self.pub_load_c = {}
@@ -173,14 +174,18 @@ class LRUCache(object):
                         # self.stack.append(i)
                         self.pub_load = self.pub_load + 1
                         self.pub_load_c[i] = self.pub_load_c[i] +1
-        elif self.pattern == "proactive_update_top":
+        elif self.pattern == "proactive_optional_renew":
             for i in range(1, self.amount + 1):
                 if now - self.updatetime[i] >= self.staleness:
-                    self.updatetime[i] = self.updatetime[i] + self.staleness
+                    self.updatetime[i] = now
+                    self.validation_time[i] = random.uniform(0, 2 * self.staleness)
                     if i in self.stack:
-                        self.stack.remove(i)
-                        self.stack.append(i)
-                        self.pub_load = self.pub_load + 1
+                        # self.stack.remove(i)
+                        # self.stack.append(i)
+                        if i < self.N + 1:
+                            self.pub_load = self.pub_load + 1
+                        else:
+                            self.stack.remove(i)
                     # else:
                     #     if len(self.stack) == self.size:
                     #         self.stack.pop(0)

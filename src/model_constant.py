@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from mcav.zipf import Zipf
 from che import Che
 from math import exp
-
+from model_validation import ValidationUniform
 
 class Reactive(object):
     def __init__(self, amount, cachesize, total_rate, Ts, popularity):
@@ -185,19 +185,126 @@ class ProactiveRenew(object):
     def totalLoad(self):
         return self._total_rate*(1-self.totalHitRatio()) + self._pub_load
 
+class ProactiveOptionalRenew(object):
+    def __init__(self, amount, cachesize, total_rate, expected_value, popularity, N):
+        self._amount = amount
+        self._popularity = popularity
+        self._total_rate = total_rate
+        self._cachesize = cachesize
+        self._che = Che(amount, cachesize, self._popularity, total_rate)
+        self._ev = expected_value
+        self._N = N
+        self._Tc0 = 0
+        self._rate = self._requestRate()
+        self._occupancy_size = self._occupancySize()
+        self._hit_ratio = self._hitRatio()
+
+        self._pub_load = self._pubLoad()
+
+
+    # def _occupancySize(self):
+    #     validation_ratio = ValidationUniform(self._amount, self._total_rate, self._ev, self._popularity).validationRatio()
+    #     validation_size = 0
+    #     existence_ratio = self._che.hitRatio()
+    #     existence_size = 0
+    #     for i in range(self._N+1, self._amount + 1):
+    #         validation_size = validation_size + validation_ratio[i]
+    #         existence_size = existence_size + existence_ratio[i]
+    #     return min(validation_size, existence_size)
+
+    def _occupancySize(self):
+        validation_ratio = ValidationUniform(self._amount, self._total_rate, self._ev, self._popularity).validationRatio()
+        existence_ratio = self._che.hitRatio()
+        validation_size = 0
+        for i in range(1, self._amount + 1):
+            if i < self._N:
+                validation_size = validation_size + existence_ratio[i]
+            else:
+                validation_size = validation_size + validation_ratio[i]
+        return min(validation_size, self._cachesize)
+
+    def _requestRate(self):
+        rr = {}
+        for i in range(1, self._amount + 1):
+            rr[i] = self._total_rate * self._popularity[i]
+        return rr
+
+    def _hitRatio(self):
+        Tc = self._che.T
+        ev = self._ev
+        hit_ratio = {}
+
+
+
+        def f(x):
+            formula = 0
+            for i in range(1, self._N + 1):
+                rate = self._rate[i]
+                formula = formula + 1 - exp(-rate*x)
+            for i in range(self._N + 1, self._amount + 1):
+                rate = self._rate[i]
+                F = self._F(rate, ev, x)
+                formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, 2 * ev)[0] + quad(F.F3, x, 2 * ev)[0]
+            return formula - self._occupancy_size
+
+        Tc0 = fsolve(f, [1])[0]
+        self._Tc0 = Tc0
+        for i in range(1, self._N+1):
+            rate = self._rate[i]
+            hit_ratio[i] = 1 - exp(-rate*Tc0)
+
+        for i in range(self._N + 1, self._amount + 1):
+            rate = self._rate[i]
+            F = self._F(rate, ev, Tc0)
+            a = quad(F.F1, 0, Tc0)
+            b = quad(F.F2, Tc0, 2 * ev)
+            c = quad(F.F3, Tc0, 2 * ev)
+            hit_ratio[i] = a[0] + b[0] + c[0]
+        return hit_ratio
+
+    def hitRatio(self):
+        return self._hit_ratio
+
+    def totalHitRatio(self):
+        thr = 0
+        for i in range(1, self._amount + 1):
+            thr = thr + self._popularity[i] * self._hit_ratio[i]
+        return thr
+
+    def Che(self):
+        return self._che
+
+    def Tc0(self):
+        return self._Tc0
+
+    def _pubLoad(self):
+        load = 0
+        for i in range(1, self._N + 1):
+            load = load + self._che.hitRatio()[i]/ self._ev
+        return load
+
+    def pubLoad(self):
+        return self._pub_load
+
+    def totalLoad(self):
+        return self._total_rate * (1 - self.totalHitRatio()) + self._pub_load
+
 
     class _F(object):
-        def __init__(self, rate, Ts, Tc):
+        def __init__(self, rate, expeted_value, Tc):
             self._rate = rate
-            self._Ts = Ts
+            self._ev = expeted_value
             self._Tc = Tc
 
-        def F1(self, t):
-            return (1-exp(-self._rate*t))/self._Ts
+        def F1(self, Tv):
+            return (Tv + exp(-self._rate * Tv) / self._rate - 1 / self._rate) / (2 * self._ev * self._ev)
 
-        def F2(self, t):
-            return (1-exp(-self._rate*t))/self._Tc
-    
+        def F2(self, Tv):
+            return (self._Tc + exp(-self._rate * self._Tc) / self._rate - 1 / self._rate) / (2 * self._ev * self._ev)
+
+        def F3(self, Tv):
+            return (Tv - self._Tc) * (1 - exp(-self._rate * self._Tc)) / (2 * self._ev * self._ev)
+
 
 if __name__ == "__main__":
     amount = 1000
