@@ -1,8 +1,8 @@
 import random
 
 class LRUCache(object):
-    def __init__(self, size, amount, staleness, pattern="normal"):
-        # pattern options: normal, reactive, proactive_remove, proactive_renew, proactive_update_top 
+    def __init__(self, size, amount, staleness, N=20, pattern="normal"):
+        # pattern options: normal, reactive, proactive_remove, proactive_renew, proactive_optional_renew 
         self.size = size
         self.amount = amount
         self.staleness = staleness
@@ -19,7 +19,7 @@ class LRUCache(object):
         self.updatetime_in_cache = {}
         self.validation_time_in_cache = {}
 
-
+        self.N = N
         self.pattern = pattern
 
         self.pub_load = 0
@@ -169,14 +169,14 @@ class LRUCache(object):
                         # self.stack.append(i)
                         self.pub_load = self.pub_load + 1
                         self.pub_load_c[i] = self.pub_load_c[i] +1
-        elif self.pattern == "proactive_update_top":
+        elif self.pattern == "proactive_optional_renew":
             for i in range(1, self.amount + 1):
                 if now - self.updatetime[i] >= self.staleness:
                     self.updatetime[i] = self.updatetime[i] + self.staleness
-                    if i in self.stack:
-                        self.stack.remove(i)
-                        self.stack.append(i)
+                    if i < self.N + 1:
                         self.pub_load = self.pub_load + 1
+                    else:
+                        self.stack.remove(i)
                     # else:
                     #     if len(self.stack) == self.size:
                     #         self.stack.pop(0)
@@ -188,18 +188,21 @@ class LRUCache(object):
 
 
 class Simulator(object):
-    def __init__(self, env, size, amount, staleness, rate, content, popularity, pattern="normal"):
+    def __init__(self, env, size, amount, staleness, rate, content, popularity, N, pattern="normal"):
         self.env = env
-        self.cache = LRUCache(size, amount, staleness, pattern)
+        self.cache = LRUCache(size, amount, staleness, N, pattern)
         self.rate = rate
         self.content = content
         self.popularity = popularity
+        self.duration = 0.1
+     
+    def setDuration(self, d):
+        self.duration = d
 
     def updateSim(self):
         while True:
             self.cache.update(self.env.now)
-            duration = 1
-            yield self.env.timeout(duration)
+            yield self.env.timeout(self.duration)
 
 
     def insertSim(self):

@@ -9,12 +9,12 @@ from math import exp
 from model_validation import ValidationUniform
 
 class Reactive(object):
-    def __init__(self, amount, cachesize, total_rate, Ts, popularity):
+    def __init__(self, amount, cachesize, total_rate, expected_value, popularity):
         self._amount = amount
         self._popularity = popularity
         self._total_rate = total_rate
         self._che = Che(amount, cachesize, self._popularity, total_rate)
-        self._Ts = Ts
+        self._ev = expected_value
         self._rate = self._requestRate()
         self._hit_ratio = self._hitRatio()
     
@@ -26,16 +26,16 @@ class Reactive(object):
     
     def _hitRatio(self):
         Tc = self._che.T
-        Ts = self._Ts
+        ev = self._ev
         hit_ratio = {}
-        if Tc > Ts:
+        if Tc > ev:
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                hit_ratio[i] = quad(self._F(rate, Ts, Tc).F1, 0, Ts)[0]
+                hit_ratio[i] = quad(self._F(rate).F1, 0, ev)[0]/ev
         else:
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                hit_ratio[i] = 1/Ts*quad(self._F(rate, Ts, Tc).F2, 0, Tc)[0] + (1-Tc/Ts)*(1-exp(-rate*Tc))
+                hit_ratio[i] = quad(self._F(rate).F1, 0, Tc)[0]/ev + (ev-Tc)*(1-exp(-rate*Tc))/ev
         return hit_ratio
 
     def hitRatio(self):
@@ -54,25 +54,22 @@ class Reactive(object):
         return self._total_rate*(1-self.totalHitRatio())
 
     class _F(object):
-        def __init__(self, rate, Ts, Tc):
+        def __init__(self, rate):
             self._rate = rate
-            self._Ts = Ts
-            self._Tc = Tc
 
         def F1(self, t):
-            return (1-exp(-self._rate*t))/self._Ts
-
-        def F2(self, t):
             return (1-exp(-self._rate*t))
 
+
 class ProactiveRemove(object):
-    def __init__(self, amount, cachesize, total_rate, Ts, popularity):
+    def __init__(self, amount, cachesize, total_rate, expected_value, popularity):
         self._amount = amount
         self._popularity = popularity
         self._total_rate = total_rate
         self._cachesize = cachesize
         self._che = Che(amount, cachesize, self._popularity, total_rate)
-        self._Ts = Ts
+        self.validation_size = ValidationUniform(self._amount, self._total_rate, self._ev, self._popularity).validationSize()
+        self._ev = expected_value
         self._Tc0 = 0
         self._rate = self._requestRate()
         self._hit_ratio = self._hitRatio()
@@ -84,30 +81,28 @@ class ProactiveRemove(object):
         return rr
 
     def _hitRatio(self):
-        Tc = self._che.T
-        Ts = self._Ts
+        ev = self._ev
         hit_ratio = {}
 
         def f(x):
             formula = 0
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                formula = formula + quad(self._F(rate, Ts, x).F2, 0, x)[0]/Ts + (1-x/Ts)*(1-exp(-rate*x))
+                formula = formula + quad(self._F(rate).F1, 0, x)[0]/ev + (ev-x)*(1-exp(-rate*x))/ev
             return formula-self._cachesize
 
-        if Tc > Ts:
+
+        if self.validation_size < self._cachesize:
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                hit_ratio[i] = quad(self._F(rate, Ts, Tc).F1, 0, Ts)[0]
+                hit_ratio[i] = quad(self._F(rate).F1, 0, ev)[0]/ev
         else:
             Tc0 = fsolve(f, [1])[0]
             self._Tc0 = Tc0
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                hit_ratio[i] = quad(self._F(rate, Ts, Tc0).F2, 0, Tc0)[0]/Ts + (1-Tc0/Ts)*(1-exp(-rate*Tc0))
+                hit_ratio[i] = quad(self._F(rate).F1, 0, Tc0)[0]/ev + (ev-Tc0)*(1-exp(-rate*Tc0))/ev
         return hit_ratio
-
-        
     
     def hitRatio(self):
         return self._hit_ratio
@@ -128,24 +123,20 @@ class ProactiveRemove(object):
         return self._total_rate*(1-self.totalHitRatio())
 
     class _F(object):
-        def __init__(self, rate, Ts, Tc):
+        def __init__(self, rate):
             self._rate = rate
-            self._Ts = Ts
-            self._Tc = Tc
 
         def F1(self, t):
-            return (1-exp(-self._rate*t))/self._Ts
+            return (1-exp(-self._rate*t))
 
-        def F2(self, t):
-            return 1-exp(-self._rate*t)
 
 class ProactiveRenew(object):
-    def __init__(self, amount, cachesize, total_rate, Ts, popularity):
+    def __init__(self, amount, cachesize, total_rate, expected_value, popularity):
         self._amount = amount
         self._popularity = popularity
         self._total_rate = total_rate
         self._che = Che(amount, cachesize, self._popularity, total_rate)
-        self._Ts = Ts
+        self._ev = expected_value
         self._rate = self._requestRate()
         self._hit_ratio = self._hitRatio()
         self._pub_load_c = {}
@@ -172,8 +163,8 @@ class ProactiveRenew(object):
     def _pubLoad(self):
         load = 0
         for i in range(1, self._amount + 1):
-            self._pub_load_c[i] = 1.0/self._Ts*self._che.hitRatio()[i]
-            load = load + 1.0/self._Ts*self._che.hitRatio()[i]
+            self._pub_load_c[i] = self._che.hitRatio()[i]/self._ev
+            load = load + self._che.hitRatio()[i]/self._ev
         return load
 
     def pubLoadC(self):
@@ -201,23 +192,12 @@ class ProactiveOptionalRenew(object):
 
         self._pub_load = self._pubLoad()
 
-
-    # def _occupancySize(self):
-    #     validation_ratio = ValidationUniform(self._amount, self._total_rate, self._ev, self._popularity).validationRatio()
-    #     validation_size = 0
-    #     existence_ratio = self._che.hitRatio()
-    #     existence_size = 0
-    #     for i in range(self._N+1, self._amount + 1):
-    #         validation_size = validation_size + validation_ratio[i]
-    #         existence_size = existence_size + existence_ratio[i]
-    #     return min(validation_size, existence_size)
-
     def _occupancySize(self):
         validation_ratio = ValidationUniform(self._amount, self._total_rate, self._ev, self._popularity).validationRatio()
         existence_ratio = self._che.hitRatio()
         validation_size = 0
         for i in range(1, self._amount + 1):
-            if i < self._N:
+            if i < self._N + 1:
                 validation_size = validation_size + existence_ratio[i]
             else:
                 validation_size = validation_size + validation_ratio[i]
@@ -234,32 +214,44 @@ class ProactiveOptionalRenew(object):
         ev = self._ev
         hit_ratio = {}
 
-
-
-        def f(x):
+        def f1(x):
             formula = 0
-            for i in range(1, self._N + 1):
+            for i in range(1, self._amount + 1):
                 rate = self._rate[i]
-                formula = formula + 1 - exp(-rate*x)
-            for i in range(self._N + 1, self._amount + 1):
-                rate = self._rate[i]
-                F = self._F(rate, ev, x)
-                formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, 2 * ev)[0] + quad(F.F3, x, 2 * ev)[0]
+                if i < self._N + 1:
+                    formula = formula + 1 - exp(-rate*x)
+                else:
+                    formula = formula + quad(self._F(rate).F1, 0, ev)[0]/ev
             return formula - self._occupancy_size
 
-        Tc0 = fsolve(f, [1])[0]
-        self._Tc0 = Tc0
-        for i in range(1, self._N+1):
-            rate = self._rate[i]
-            hit_ratio[i] = 1 - exp(-rate*Tc0)
+        def f2(x):
+            formula = 0
+            for i in range(1, self._amount + 1):
+                rate = self._rate[i]
+                if i < self._N + 1:
+                    formula = formula + 1 - exp(-rate*x)
+                else:
+                    formula = formula + quad(self._F(rate).F1, 0, x)[0]/ev + (ev-x)*(1-exp(-rate*x))/ev
+            return formula - self._occupancy_size
 
-        for i in range(self._N + 1, self._amount + 1):
-            rate = self._rate[i]
-            F = self._F(rate, ev, Tc0)
-            a = quad(F.F1, 0, Tc0)
-            b = quad(F.F2, Tc0, 2 * ev)
-            c = quad(F.F3, Tc0, 2 * ev)
-            hit_ratio[i] = a[0] + b[0] + c[0]
+        if self._occupancy_size < self._cachesize:
+            a  = fsolve(f1, [1])
+            Tc0 = fsolve(f1, [1])[0]
+            for i in range(1, self._amount + 1):
+                rate = self._rate[i]
+                if i < self._N + 1:
+                    hit_ratio[i] = 1 - exp(-rate*Tc0)
+                else:
+                    hit_ratio[i] = quad(self._F(rate).F1, 0, ev)[0]/ev
+        else:
+            Tc0 = fsolve(f2, [1])[0]
+            for i in range(1, self._amount+1):
+                rate = self._rate[i]
+                if i < self._N+1:
+                    hit_ratio[i] = 1 - exp(-rate*Tc0)
+                else:
+                    hit_ratio[i] = quad(self._F(rate).F1, 0, Tc0)[0]/ev + (ev-Tc0)*(1-exp(-rate*Tc0))/ev
+        self._Tc0 = Tc0
         return hit_ratio
 
     def hitRatio(self):
@@ -291,27 +283,20 @@ class ProactiveOptionalRenew(object):
 
 
     class _F(object):
-        def __init__(self, rate, expeted_value, Tc):
+        def __init__(self, rate):
             self._rate = rate
-            self._ev = expeted_value
-            self._Tc = Tc
 
-        def F1(self, Tv):
-            return (Tv + exp(-self._rate * Tv) / self._rate - 1 / self._rate) / (2 * self._ev * self._ev)
-
-        def F2(self, Tv):
-            return (self._Tc + exp(-self._rate * self._Tc) / self._rate - 1 / self._rate) / (2 * self._ev * self._ev)
-
-        def F3(self, Tv):
-            return (Tv - self._Tc) * (1 - exp(-self._rate * self._Tc)) / (2 * self._ev * self._ev)
+        def F1(self, t):
+            return 1-exp(-self._rate*t)
 
 
 if __name__ == "__main__":
-    amount = 1000
+    amount = 100
     z = 0.8
-    cachesize = 100
-    total_rate = 10
-    Ts = 20
+    cachesize = 50
+    total_rate = 20
+    Ts = 10
+    N=20
 
     zipf = Zipf(amount, z)
     popularity = zipf.popularity()
@@ -323,7 +308,7 @@ if __name__ == "__main__":
     # Tc = che.T
     # print("Tc: ", Tc)
 
-    reactive = Reactive(amount,cachesize,total_rate,Ts,popularity)
+    reactive = ProactiveOptionalRenew(amount,cachesize,total_rate,Ts,popularity,N)
     hit_ratio = reactive.hitRatio()
     total_hit_ratio = reactive.totalHitRatio()
     print("Tc: ", reactive.Che().T)
@@ -334,8 +319,6 @@ if __name__ == "__main__":
     for i in range(1, 51):
         index.append(i)
         result.append(hit_ratio[i])
-    for i in range(11):
-        print(result[i])
 
     plt.plot(index, result, "+-", label="simulation")
     plt.xlabel("content ID")
