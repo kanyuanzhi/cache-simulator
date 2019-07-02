@@ -235,7 +235,6 @@ class ProactiveOptionalRenew(object):
             return formula - self._occupancy_size
 
         if self._occupancy_size < self._cachesize:
-            a  = fsolve(f1, [1])
             Tc0 = fsolve(f1, [1])[0]
             for i in range(1, self._amount + 1):
                 rate = self._rate[i]

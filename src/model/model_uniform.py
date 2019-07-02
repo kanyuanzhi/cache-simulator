@@ -249,6 +249,7 @@ class ProactiveOptionalRenew(object):
         return rr
 
     def _hitRatio(self):
+        Tc = self._che.T
         ev = self._ev
         hit_ratio = {}
 
@@ -261,7 +262,7 @@ class ProactiveOptionalRenew(object):
                 else:
                     F = self._F(rate, ev, None)
                     formula = formula + quad(F.F1, 0, 2*ev)[0]
-            return formula - self._occupancy_size
+            return formula - self._cachesize
 
         def f2(x):
             formula = 0
@@ -272,30 +273,52 @@ class ProactiveOptionalRenew(object):
                 else:
                     F = self._F(rate, ev, x)
                     formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, 2 * ev)[0] + quad(F.F3, x, 2 * ev)[0]
-            return formula - self._occupancy_size
-        
-        if self._occupancy_size < self._cachesize:
-            Tc0 = fsolve(f1, [1])[0]
-            for i in range(1, self._amount + 1):
-                rate = self._rate[i]
-                if i < self._N + 1:
-                    hit_ratio[i] = 1 - exp(-rate*Tc0)
-                else:
-                    F = self._F(rate, ev, None)
-                    a = quad(F.F1, 0, 2*ev)
-                    hit_ratio[i] = a[0]
-        else:
+            return formula - self._cachesize
+
+        if 2*ev>Tc:
             Tc0 = fsolve(f2, [1])[0]
             for i in range(1, self._amount + 1):
                 rate = self._rate[i]
                 if i < self._N + 1:
-                    hit_ratio[i] = 1 - exp(-rate*Tc0)
+                    hit_ratio[i] = 1 - exp(-rate * Tc0)
                 else:
                     F = self._F(rate, ev, Tc0)
                     a = quad(F.F1, 0, Tc0)
                     b = quad(F.F2, Tc0, 2 * ev)
                     c = quad(F.F3, Tc0, 2 * ev)
                     hit_ratio[i] = a[0] + b[0] + c[0]
+        else:
+            Tc0 = fsolve(f1, [1])[0]
+            for i in range(1, self._amount + 1):
+                rate = self._rate[i]
+                if i < self._N + 1:
+                    hit_ratio[i] = 1 - exp(-rate * Tc0)
+                else:
+                    F = self._F(rate, ev, None)
+                    a = quad(F.F1, 0, 2 * ev)
+                    hit_ratio[i] = a[0]
+        # if self._occupancy_size < self._cachesize:
+        #     Tc0 = fsolve(f1, [1])[0]
+        #     for i in range(1, self._amount + 1):
+        #         rate = self._rate[i]
+        #         if i < self._N + 1:
+        #             hit_ratio[i] = 1 - exp(-rate * Tc0)
+        #         else:
+        #             F = self._F(rate, ev, None)
+        #             a = quad(F.F1, 0, 2 * ev)
+        #             hit_ratio[i] = a[0]
+        # else:
+        #     Tc0 = fsolve(f2, [1])[0]
+        #     for i in range(1, self._amount + 1):
+        #         rate = self._rate[i]
+        #         if i < self._N + 1:
+        #             hit_ratio[i] = 1 - exp(-rate*Tc0)
+        #         else:
+        #             F = self._F(rate, ev, Tc0)
+        #             a = quad(F.F1, 0, Tc0)
+        #             b = quad(F.F2, Tc0, 2 * ev)
+        #             c = quad(F.F3, Tc0, 2 * ev)
+        #             hit_ratio[i] = a[0] + b[0] + c[0]
         self._Tc0 = Tc0
         return hit_ratio
 
@@ -348,7 +371,7 @@ if __name__ == "__main__":
     z = 0.8
     cachesize = 50
     total_rate = 20
-    expected_value = 5
+    expected_value = 3
     N=20
 
     zipf = Zipf(amount, z)
@@ -365,6 +388,7 @@ if __name__ == "__main__":
     hit_ratio = poru.hitRatio()
     total_hit_ratio = poru.totalHitRatio()
     print("Tc: ", poru.Che().T)
+    print("Tc0: ", poru.Tc0())
     print("total hit ratio: ", total_hit_ratio)
     print(poru._occupancy_size)
     print()

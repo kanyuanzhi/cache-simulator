@@ -14,19 +14,19 @@ if __name__ == "__main__":
     z = 0.8
     cachesize = 50
     total_rate = 20
-    expected_value = 5
+    expected_value = 3
     N = 20
     simulation_time = 10000
     # random.seed(42)
     zipf = Zipf(amount, z)
 
-    pattern = "reactive"
+    # pattern = "reactive"
     # pattern = "proactive_remove"
     # pattern = "proactive_renew"
-    # pattern = "proactive_optional_renew"
+    pattern = "proactive_optional_renew"
 
-    distribution = "constant"
-    # distribution = "uniform"
+    # distribution = "constant"
+    distribution = "uniform"
     # distribution = "exponential"
 
 
@@ -35,6 +35,8 @@ if __name__ == "__main__":
     popularity = [popularity_dict[i] for i in range(1, amount)]
 
     model = Model(amount, cachesize, total_rate, expected_value, popularity_dict, N, pattern, distribution).getModel()
+    print("Tc0: ", model.Tc0())
+    print("occupancy size: ", model._occupancySize())
     print("model: ", model.totalHitRatio())
 
     env = simpy.Environment()
@@ -45,7 +47,7 @@ if __name__ == "__main__":
     env.run(until=simulation_time)
     print("simulation: ", simulator.cache.totalHitRatio())
 
-    print("Error: ", round((model.totalHitRatio()-simulator.cache.totalHitRatio())/simulator.cache.totalHitRatio(),2))
+    print("Error: ", (model.totalHitRatio()-simulator.cache.totalHitRatio())/simulator.cache.totalHitRatio())
 
     index = []
     hit_ratio_sim = []

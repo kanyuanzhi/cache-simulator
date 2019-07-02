@@ -173,10 +173,11 @@ class LRUCache(object):
             for i in range(1, self.amount + 1):
                 if now - self.updatetime[i] >= self.staleness:
                     self.updatetime[i] = self.updatetime[i] + self.staleness
-                    if i < self.N + 1:
-                        self.pub_load = self.pub_load + 1
-                    else:
-                        self.stack.remove(i)
+                    if i in self.stack:
+                        if i < self.N + 1:
+                            self.pub_load = self.pub_load + 1
+                        else:
+                            self.stack.remove(i)
                     # else:
                     #     if len(self.stack) == self.size:
                     #         self.stack.pop(0)

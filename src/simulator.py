@@ -1,5 +1,6 @@
 import sys
-sys.path.append('./src/simulator')
+# sys.path.append('./src/simulator')
+sys.path.append('./simulator')
 import lru_simulator_constant as sc
 import lru_simulator_uniform as su
 import lru_simulator_exponential as se
