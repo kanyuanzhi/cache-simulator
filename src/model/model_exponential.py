@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 from mcav.zipf import Zipf
 from che import Che
 from math import exp
+from model_validation import ValidationExponential
 
 
 class Reactive(object):
@@ -213,7 +214,7 @@ class ProactiveOptionalRenew(object):
         self._pub_load = self._pubLoad()
 
     def _occupancySize(self):
-        validation_ratio = ValidationUniform(self._amount, self._total_rate, self._ev, self._popularity).validationRatio()
+        validation_ratio = ValidationExponential(self._amount, self._total_rate, self._ev, self._popularity).validationRatio()
         existence_ratio = self._che.hitRatio()
         validation_size = 0
         for i in range(1, self._amount + 1):
@@ -241,7 +242,7 @@ class ProactiveOptionalRenew(object):
                     formula = formula + 1 - exp(-rate*x)
                 else:
                     F = self._F(rate, ev, x)
-                    formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, 2 * ev)[0] + quad(F.F3, x, 2 * ev)[0]
+                    formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, float("inf"))[0] + quad(F.F3, x, float("inf"))[0]
             return formula - self._occupancy_size
         
         Tc0 = fsolve(f, [1])[0]
@@ -252,8 +253,8 @@ class ProactiveOptionalRenew(object):
             else:
                 F = self._F(rate, ev, Tc0)
                 a = quad(F.F1, 0, Tc0)
-                b = quad(F.F2, Tc0, 2 * ev)
-                c = quad(F.F3, Tc0, 2 * ev)
+                b = quad(F.F2, Tc0, float("inf"))
+                c = quad(F.F3, Tc0, float("inf"))
                 hit_ratio[i] = a[0] + b[0] + c[0]
         self._Tc0 = Tc0
         return hit_ratio

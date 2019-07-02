@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 from mcav.zipf import Zipf
 from che import Che
 from math import exp
-from model_validation import ValidationUniform
+from model_validation import ValidationConstant
 
 class Reactive(object):
     def __init__(self, amount, cachesize, total_rate, expected_value, popularity):
@@ -68,7 +68,7 @@ class ProactiveRemove(object):
         self._total_rate = total_rate
         self._cachesize = cachesize
         self._che = Che(amount, cachesize, self._popularity, total_rate)
-        self.validation_size = ValidationUniform(self._amount, self._total_rate, self._ev, self._popularity).validationSize()
+        self._validation_size = ValidationConstant(self._amount, self._total_rate, self._ev, self._popularity).validationSize()
         self._ev = expected_value
         self._Tc0 = 0
         self._rate = self._requestRate()
@@ -92,7 +92,7 @@ class ProactiveRemove(object):
             return formula-self._cachesize
 
 
-        if self.validation_size < self._cachesize:
+        if self._validation_size < self._cachesize:
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
                 hit_ratio[i] = quad(self._F(rate).F1, 0, ev)[0]/ev
@@ -193,7 +193,7 @@ class ProactiveOptionalRenew(object):
         self._pub_load = self._pubLoad()
 
     def _occupancySize(self):
-        validation_ratio = ValidationUniform(self._amount, self._total_rate, self._ev, self._popularity).validationRatio()
+        validation_ratio = ValidationConstant(self._amount, self._total_rate, self._ev, self._popularity).validationRatio()
         existence_ratio = self._che.hitRatio()
         validation_size = 0
         for i in range(1, self._amount + 1):
