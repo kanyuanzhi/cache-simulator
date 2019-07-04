@@ -32,11 +32,12 @@ class Reactive(object):
         hit_ratio = {}
         for i in range(1, self._amount + 1):
             rate = self._rate[i]
-            F = self._F(rate, ev, Tc)
-            a = quad(F.F1, 0, Tc)
-            b = quad(F.F2, Tc, float("inf"))
-            c = quad(F.F3, Tc, float("inf"))
-            hit_ratio[i] = a[0] + b[0] + c[0]
+            # F = self._F(rate, ev, Tc)
+            # a = quad(F.F1, 0, Tc)
+            # b = quad(F.F2, Tc, float("inf"))
+            # c = quad(F.F3, Tc, float("inf"))
+            # hit_ratio[i] = a[0] + b[0] + c[0]
+            hit_ratio[i] = self.df1(rate, ev, Tc)+self.df2(rate, ev, Tc)
         return hit_ratio
 
     def hitRatio(self):
@@ -75,6 +76,16 @@ class Reactive(object):
         def F3(self, Ts):
             return (Ts - self._Tc) * (1 - exp(-self._rate * self._Tc)) * exp(-Ts/self._ev) / (self._ev * self._ev)
 
+    def df1(self, rate, ev, x):
+        # return (1 - x*exp(-x/ev)/ev - exp(-x/ev) + (1-exp(-(rate+1.0/ev)*x))/(rate*ev*(rate*ev+1)) + (1-exp(-x/ev))/(rate*ev))
+        return - exp(-x / ev) * x / ev - exp(-x / ev) + 1 + (1 - exp(-x * (ev * rate + 1) / ev)) / (
+        ev * rate * (ev * rate + 1)) + exp(-x / ev) / (ev * rate) - 1 / (ev * rate)
+
+    def df2(self, rate, ev, x):
+        # return (exp(-x/ev)*(x-(1/rate+x)*(1-exp(-rate*x)))/ev + (x/ev-1)*(1-exp(-rate*x)*exp(-x/ev)))
+        return (exp(-x / ev) * ((rate * x + 1) * exp(-rate * x) - 1) / (rate * ev)) + exp(-x / ev) * (x + ev) * (
+        1 - exp(-rate * x)) / ev
+
 class ProactiveRemove(object):
     def __init__(self, amount, cachesize, total_rate, expected_value, popularity):
         self._amount = amount
@@ -101,19 +112,21 @@ class ProactiveRemove(object):
             formula = 0
             for i in range(1, self._amount + 1):
                 rate = self._rate[i]
-                F = self._F(rate, ev, x)
-                formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, float("inf"))[0] + quad(F.F3, x, float("inf"))[0]
+                # F = self._F(rate, ev, x)
+                # formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, float("inf"))[0] + quad(F.F3, x, float("inf"))[0]
+                formula = formula + self.df1(rate, ev, x) + self.df2(rate, ev, x)
             return formula - self._cachesize
 
-        Tc0 = fsolve(f, [1])[0]
+        Tc0 = fsolve(f, [0])[0]
         self._Tc0 = Tc0
         for i in range(1, self._amount + 1):
             rate = self._rate[i]
-            F = self._F(rate, ev, Tc0)
-            a = quad(F.F1, 0, Tc0)
-            b = quad(F.F2, Tc0, float("inf"))
-            c = quad(F.F3, Tc0, float("inf"))
-            hit_ratio[i] = a[0] + b[0] + c[0]
+            # F = self._F(rate, ev, Tc0)
+            # a = quad(F.F1, 0, Tc0)
+            # b = quad(F.F2, Tc0, float("inf"))
+            # c = quad(F.F3, Tc0, float("inf"))
+            # hit_ratio[i] = a[0] + b[0] + c[0]
+            hit_ratio[i] = self.df1(rate, ev, Tc0) + self.df2(rate, ev, Tc0)
         return hit_ratio
 
     def hitRatio(self):
@@ -148,6 +161,16 @@ class ProactiveRemove(object):
         
         def F3(self, Ts):
             return (Ts - self._Tc) * (1 - exp(-self._rate * self._Tc)) * exp(-Ts/self._ev) / (self._ev * self._ev)
+
+    def df1(self, rate, ev, x):
+        # return (1 - x*exp(-x/ev)/ev - exp(-x/ev) + (1-exp(-(rate+1.0/ev)*x))/(rate*ev*(rate*ev+1)) + (1-exp(-x/ev))/(rate*ev))
+        return - exp(-x / ev) * x / ev - exp(-x / ev) + 1 + (1 - exp(-x * (ev * rate + 1) / ev)) / (
+        ev * rate * (ev * rate + 1)) + exp(-x / ev) / (ev * rate) - 1 / (ev * rate)
+
+    def df2(self, rate, ev, x):
+        # return (exp(-x/ev)*(x-(1/rate+x)*(1-exp(-rate*x)))/ev + (x/ev-1)*(1-exp(-rate*x)*exp(-x/ev)))
+        return (exp(-x / ev) * ((rate * x + 1) * exp(-rate * x) - 1) / (rate * ev)) + exp(-x / ev) * (x + ev) * (
+        1 - exp(-rate * x)) / ev
 
 
 class ProactiveRenew(object):
@@ -208,7 +231,9 @@ class ProactiveOptionalRenew(object):
         self._N = N
         self._Tc0 = 0
         self._rate = self._requestRate()
+        self._validation_size = 0
         self._occupancy_size = self._occupancySize()
+
         self._hit_ratio = self._hitRatio()
 
         self._pub_load = self._pubLoad()
@@ -217,12 +242,19 @@ class ProactiveOptionalRenew(object):
         validation_ratio = ValidationExponential(self._amount, self._total_rate, self._ev, self._popularity).validationRatio()
         existence_ratio = self._che.hitRatio()
         validation_size = 0
-        for i in range(1, self._amount + 1):
-            if i < self._N + 1:
-                validation_size = validation_size + existence_ratio[i]
-            else:
-                validation_size = validation_size + validation_ratio[i]
-        return min(validation_size, self._cachesize)
+        # for i in range(1, self._amount + 1):
+        #     if i < self._N + 1:
+        #         validation_size = validation_size + existence_ratio[i]
+        #     else:
+        #         validation_size = validation_size + validation_ratio[i]
+        for i in range(self._N + 1, self._amount + 1):
+            validation_size = validation_size + validation_ratio[i]
+        validation_size = validation_size + self._N
+        self._validation_size = validation_size
+        if self._N < self._cachesize:
+            return min(validation_size, self._cachesize)
+        else:
+            return self._cachesize
 
     def _requestRate(self):
         rr = {}
@@ -241,21 +273,23 @@ class ProactiveOptionalRenew(object):
                 if i < self._N + 1:
                     formula = formula + 1 - exp(-rate*x)
                 else:
-                    F = self._F(rate, ev, x)
-                    formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, float("inf"))[0] + quad(F.F3, x, float("inf"))[0]
+                    formula = formula + self.df1(rate, ev, x) + self.df2(rate, ev, x)
+                    # F = self._F(rate, ev, x)
+                    # formula = formula + quad(F.F1, 0, x)[0] + quad(F.F2, x, float("inf"))[0] + quad(F.F3, x, float("inf"))[0]
             return formula - self._occupancy_size
         
-        Tc0 = fsolve(f, [1])[0]
+        Tc0 = fsolve(f, [0])[0]
         for i in range(1, self._amount + 1):
             rate = self._rate[i]
             if i < self._N + 1:
                 hit_ratio[i] = 1 - exp(-rate*Tc0)
             else:
-                F = self._F(rate, ev, Tc0)
-                a = quad(F.F1, 0, Tc0)
-                b = quad(F.F2, Tc0, float("inf"))
-                c = quad(F.F3, Tc0, float("inf"))
-                hit_ratio[i] = a[0] + b[0] + c[0]
+                # F = self._F(rate, ev, Tc0)
+                # a = quad(F.F1, 0, Tc0)
+                # b = quad(F.F2, Tc0, float("inf"))
+                # c = quad(F.F3, Tc0, float("inf"))
+                # hit_ratio[i] = a[0] + b[0] + c[0]
+                hit_ratio[i] = self.df1(rate, ev, Tc0) + self.df2(rate, ev, Tc0)
         self._Tc0 = Tc0
         return hit_ratio
 
@@ -302,7 +336,15 @@ class ProactiveOptionalRenew(object):
         def F3(self, Ts):
             return (Ts - self._Tc) * (1 - exp(-self._rate * self._Tc)) * exp(-Ts/self._ev) / (self._ev * self._ev)
 
+    def df1(self, rate, ev, x):
+        # return (1 - x*exp(-x/ev)/ev - exp(-x/ev) + (1-exp(-(rate+1.0/ev)*x))/(rate*ev*(rate*ev+1)) + (1-exp(-x/ev))/(rate*ev))
+        return - exp(-x / ev) * x / ev - exp(-x / ev) + 1 + (1 - exp(-x * (ev * rate + 1) / ev)) / (
+        ev * rate * (ev * rate + 1)) + exp(-x / ev) / (ev * rate) - 1 / (ev * rate)
 
+    def df2(self, rate, ev, x):
+        # return (exp(-x/ev)*(x-(1/rate+x)*(1-exp(-rate*x)))/ev + (x/ev-1)*(1-exp(-rate*x)*exp(-x/ev)))
+        return (exp(-x / ev) * ((rate * x + 1) * exp(-rate * x) - 1) / (rate * ev)) + exp(-x / ev) * (x + ev) * (
+        1 - exp(-rate * x)) / ev
 
 
 

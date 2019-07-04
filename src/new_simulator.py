@@ -5,15 +5,15 @@ mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 
 from mcav.zipf import Zipf
-from model_uniform import ReactiveUniform, ProactiveRemoveUniform
 
 
 class LRUCache(object):
-    def __init__(self, size, amount, staleness, pattern="normal"):
+    def __init__(self, size, amount, staleness, N, pattern="normal"):
         # pattern options: normal, reactive, proactive_remove, proactive_renew, proactive_update_top 
         self.size = size
         self.amount = amount
         self.staleness = staleness
+        self.N = N
         self.stack = []
         self.hit = 0
         self.miss = 0
@@ -107,7 +107,7 @@ class LRUCache(object):
 
     def hitRatio(self):
         hit_ratio = {}
-        for i in range(1, self.amount):
+        for i in range(1, self.amount + 1):
             if self.chit[i] == 0 and self.cmiss[i] == 0:
                 hit_ratio[i] = 0
             else:
@@ -117,7 +117,7 @@ class LRUCache(object):
 
     def originalHitRatio(self):
         original_hit_ratio = {}
-        for i in range(1, self.amount):
+        for i in range(1, self.amount + 1):
             if self.original_chit[i] == 0 and self.original_cmiss[i] == 0:
                 original_hit_ratio[i] = 0
             else:
@@ -127,7 +127,7 @@ class LRUCache(object):
     
     def validationRateUnderHit(self):
         vuh = {}
-        for i in range(1, self.amount):
+        for i in range(1, self.amount + 1):
             if self.original_chit[i] == 0:
                 vuh[i] = 0
             else:
@@ -146,16 +146,6 @@ class LRUCache(object):
     def totalLoad(self):
         return self.miss + self.pub_load
 
-    
-    # def validationRate(self):
-    #     vr = {}
-    #     for i in range(1, self.amount):
-    #         if self.val[i] == 0 and self.inval[i] == 0:
-    #             vr[i] = 0
-    #         else:
-    #             vr[i] = float(self.val[i] / (self.val[i]+self.inval[i]))
-    #     return vr
-
     def update(self, id, now, validation_time):
         if self.pattern == "reactive":
             self.updatetime[id] = now
@@ -173,6 +163,16 @@ class LRUCache(object):
                 # self.stack.append(i)
                 self.pub_load = self.pub_load + 1
                 self.pub_load_c[id] = self.pub_load_c[id] +1
+        elif self.pattern == "proactive_optional_renew":
+            self.updatetime[id] = now
+            self.validation_time[id] = validation_time
+            if id in self.stack:
+                # self.stack.remove(i)
+                # self.stack.append(i)
+                if id < self.N+1:
+                    self.pub_load = self.pub_load + 1
+                else:
+                    self.stack.remove(id)
         else:
             pass
 
@@ -199,12 +199,12 @@ class Simulator(object):
             self.cache.insert(item,self.env.now)
             # print(self.cache.cacheSize())
             duration = random.expovariate(self.rate)
-            if int(self.env.now) % 2000 == 0 and print_flag:
+            if int(self.env.now) % 50 == 0 and print_flag:
                 print(self.env.now)
                 print(self.cache.cacheSize())
                 print(self.cache.totalHitRatio())
                 print_flag = False
-            if int(self.env.now) % 2000 != 0 and not print_flag:
+            if int(self.env.now) % 50 != 0 and not print_flag:
                 print_flag = True
             yield self.env.timeout(duration)
     
@@ -226,7 +226,8 @@ class Item(object):
 
     def update(self):
         while True:
-            duration = random.uniform(0, self.staleness)
+            # duration = random.uniform(0, 2*self.staleness)
+            duration = random.expovariate(1.0 / self.staleness)
             self.cache.update(self.id, self.env.now, duration)
             yield self.env.timeout(duration)
 
@@ -263,6 +264,17 @@ class User(object):
         return item
 
 
+class NewSimulator(object):
+    def __init__(self, cachesize, amount, staleness, total_rate, z, N, pattern, simulation_time=10000):
+        env = simpy.Environment()
+        self.cache = LRUCache(cachesize, amount, staleness, N, pattern)
+        for id in range(1, amount + 1):
+            env.process(Item(env, id, self.cache, staleness).update())
+
+        env.process(User(env, self.cache, amount, z, total_rate).request())
+        env.run(until=simulation_time)
+        print("sim: ", self.cache.totalHitRatio())
+
 if __name__ == "__main__":
 
     simulation_time = 10000
@@ -270,13 +282,16 @@ if __name__ == "__main__":
     amount = 5000
     z = 0.8
     cachesize = 100
-    staleness = 10
-    total_rate = 10
-    pattern = "reactive"
+    staleness = 6
+    total_rate = 20
+    # pattern = "reactive"
+    # pattern = "proactive_remove"
+    # pattern = "proactive_renew"
+    pattern = "proactive_optional_renew"
 
-    reactive = ReactiveUniform(amount, cachesize, total_rate, staleness, Zipf(amount, z).popularity())
-
-    print("model: ", reactive.totalHitRatio())
+    # reactive = ReactiveUniform(amount, cachesize, total_rate, staleness, Zipf(amount, z).popularity())
+    #
+    # print("model: ", reactive.totalHitRatio())
 
     env = simpy.Environment()
     cache = LRUCache(cachesize, amount, staleness, pattern)
@@ -287,7 +302,7 @@ if __name__ == "__main__":
     env.process(User(env, cache, amount, z, total_rate).request())
     env.run(until=simulation_time)
 
-
+    print("sim: ", cache.totalHitRatio())
 
     index = []
     sim = []
@@ -295,10 +310,10 @@ if __name__ == "__main__":
     for i in range(1, amount + 1):
         index.append(i)
         sim.append(cache.hitRatio()[i])
-        model.append(reactive.hitRatio()[i])
+        # model.append(reactive.hitRatio()[i])
 
     plt.plot(index, sim, "+", color="black", label="simulation")
-    plt.plot(index, model, color="black", linewidth="1", label="model")
+    # plt.plot(index, model, color="black", linewidth="1", label="model")
 
 
     plt.xlabel("content ID",)

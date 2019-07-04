@@ -1,5 +1,5 @@
 from scipy.integrate import quad
-from scipy.optimize import fsolve
+from scipy.optimize import fsolve,root
 import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
@@ -31,11 +31,13 @@ class Reactive(object):
         if Tc > ev:
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                hit_ratio[i] = quad(self._F(rate).F1, 0, ev)[0]/ev
+                # hit_ratio[i] = quad(self._F(rate).F1, 0, ev)[0]/ev
+                hit_ratio[i] = self.df1(rate, ev)/ev
         else:
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                hit_ratio[i] = quad(self._F(rate).F1, 0, Tc)[0]/ev + (ev-Tc)*(1-exp(-rate*Tc))/ev
+                # hit_ratio[i] = quad(self._F(rate).F1, 0, Tc)[0]/ev + (ev-Tc)*(1-exp(-rate*Tc))/ev
+                hit_ratio[i] = self.df1(rate, Tc)/ev + (ev - Tc) * (1 - exp(-rate * Tc)) / ev
         return hit_ratio
 
     def hitRatio(self):
@@ -60,6 +62,10 @@ class Reactive(object):
         def F1(self, t):
             return (1-exp(-self._rate*t))
 
+    def df1(self, rate, x):
+        return (x + exp(-rate*x)/rate-1/rate)
+
+
 
 class ProactiveRemove(object):
     def __init__(self, amount, cachesize, total_rate, expected_value, popularity):
@@ -68,11 +74,16 @@ class ProactiveRemove(object):
         self._total_rate = total_rate
         self._cachesize = cachesize
         self._che = Che(amount, cachesize, self._popularity, total_rate)
-        self._validation_size = ValidationConstant(self._amount, self._total_rate, self._ev, self._popularity).validationSize()
-        self._ev = expected_value
+        self._ev = float(expected_value)
+        self._validation_size = ValidationConstant(self._amount, self._total_rate, self._ev,
+                                                   self._popularity).validationSize()
+        self._occupancy_size = self._occupancySize()
         self._Tc0 = 0
         self._rate = self._requestRate()
         self._hit_ratio = self._hitRatio()
+
+    def _occupancySize(self):
+        return min(self._validation_size, self._cachesize)
 
     def _requestRate(self):
         rr = {}
@@ -81,6 +92,7 @@ class ProactiveRemove(object):
         return rr
 
     def _hitRatio(self):
+        Tc = self._che.T
         ev = self._ev
         hit_ratio = {}
 
@@ -88,20 +100,29 @@ class ProactiveRemove(object):
             formula = 0
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                formula = formula + quad(self._F(rate).F1, 0, x)[0]/ev + (ev-x)*(1-exp(-rate*x))/ev
+                formula = formula + self.df1(rate,x)/ev + (ev-x)*(1-exp(-rate*x))/ev
             return formula-self._cachesize
 
-
+        # if ev < Tc:
+        #     for i in range(1, self._amount+1):
+        #         rate = self._rate[i]
+        #         hit_ratio[i] = quad(self._F(rate).F1, 0, ev)[0]/ev
+        # else:
+        #     Tc0 = fsolve(f, [1])[0]
+        #     self._Tc0 = Tc0
+        #     for i in range(1, self._amount + 1):
+        #         rate = self._rate[i]
+        #         hit_ratio[i] = quad(self._F(rate).F1, 0, Tc0)[0] / ev + (ev - Tc0) * (1 - exp(-rate * Tc0)) / ev
         if self._validation_size < self._cachesize:
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                hit_ratio[i] = quad(self._F(rate).F1, 0, ev)[0]/ev
+                hit_ratio[i] = self.df1(rate,ev)/ev
         else:
             Tc0 = fsolve(f, [1])[0]
             self._Tc0 = Tc0
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
-                hit_ratio[i] = quad(self._F(rate).F1, 0, Tc0)[0]/ev + (ev-Tc0)*(1-exp(-rate*Tc0))/ev
+                hit_ratio[i] = self.df1(rate,Tc0)/ev + (ev-Tc0)*(1-exp(-rate*Tc0))/ev
         return hit_ratio
     
     def hitRatio(self):
@@ -128,6 +149,9 @@ class ProactiveRemove(object):
 
         def F1(self, t):
             return (1-exp(-self._rate*t))
+
+    def df1(self, rate, x):
+        return (x + exp(-rate*x)/rate-1/rate)
 
 
 class ProactiveRenew(object):
@@ -187,6 +211,7 @@ class ProactiveOptionalRenew(object):
         self._N = N
         self._Tc0 = 0
         self._rate = self._requestRate()
+        self._validation_size = 0
         self._occupancy_size = self._occupancySize()
         self._hit_ratio = self._hitRatio()
 
@@ -196,11 +221,13 @@ class ProactiveOptionalRenew(object):
         validation_ratio = ValidationConstant(self._amount, self._total_rate, self._ev, self._popularity).validationRatio()
         existence_ratio = self._che.hitRatio()
         validation_size = 0
-        for i in range(1, self._amount + 1):
-            if i < self._N + 1:
-                validation_size = validation_size + existence_ratio[i]
-            else:
-                validation_size = validation_size + validation_ratio[i]
+        for i in range(self._N + 1, self._amount + 1):
+            # if i < self._N + 1:
+            #     validation_size = validation_size + existence_ratio[i]
+            # else:
+            validation_size = validation_size + validation_ratio[i]
+        validation_size = validation_size + self._N
+        self._validation_size = validation_size
         return min(validation_size, self._cachesize)
 
     def _requestRate(self):
@@ -221,7 +248,7 @@ class ProactiveOptionalRenew(object):
                 if i < self._N + 1:
                     formula = formula + 1 - exp(-rate*x)
                 else:
-                    formula = formula + quad(self._F(rate).F1, 0, ev)[0]/ev
+                    formula = formula + self.df1(rate,ev)/ev
             return formula - self._occupancy_size
 
         def f2(x):
@@ -231,25 +258,26 @@ class ProactiveOptionalRenew(object):
                 if i < self._N + 1:
                     formula = formula + 1 - exp(-rate*x)
                 else:
-                    formula = formula + quad(self._F(rate).F1, 0, x)[0]/ev + (ev-x)*(1-exp(-rate*x))/ev
+                    formula = formula + self.df1(rate,x)/ev + (ev-x)*(1-exp(-rate*x))/ev
             return formula - self._occupancy_size
 
         if self._occupancy_size < self._cachesize:
-            Tc0 = fsolve(f1, [1])[0]
+            Tc0 = fsolve(f2, [0])[0]
             for i in range(1, self._amount + 1):
                 rate = self._rate[i]
                 if i < self._N + 1:
                     hit_ratio[i] = 1 - exp(-rate*Tc0)
                 else:
-                    hit_ratio[i] = quad(self._F(rate).F1, 0, ev)[0]/ev
+                    # hit_ratio[i] = self.df1(rate,ev)/ev
+                    hit_ratio[i] = self.df1(rate,Tc0)/ev + (ev-Tc0)*(1-exp(-rate*Tc0))/ev
         else:
-            Tc0 = fsolve(f2, [1])[0]
+            Tc0 = fsolve(f2, [0])[0]
             for i in range(1, self._amount+1):
                 rate = self._rate[i]
                 if i < self._N+1:
                     hit_ratio[i] = 1 - exp(-rate*Tc0)
                 else:
-                    hit_ratio[i] = quad(self._F(rate).F1, 0, Tc0)[0]/ev + (ev-Tc0)*(1-exp(-rate*Tc0))/ev
+                    hit_ratio[i] = self.df1(rate,Tc0)/ev + (ev-Tc0)*(1-exp(-rate*Tc0))/ev
         self._Tc0 = Tc0
         return hit_ratio
 
@@ -287,6 +315,9 @@ class ProactiveOptionalRenew(object):
 
         def F1(self, t):
             return 1-exp(-self._rate*t)
+
+    def df1(self, rate, x):
+        return (x + exp(-rate * x) / rate - 1 / rate)
 
 
 if __name__ == "__main__":

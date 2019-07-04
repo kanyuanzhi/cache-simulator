@@ -1,30 +1,34 @@
-from sympy import *
 from scipy.integrate import quad
+import matplotlib as mpl
+mpl.use('TkAgg')
+import matplotlib.pyplot as plt
 import math
 import random
+from mcav.zipf import Zipf
+
+from che import Che
 
 if __name__ == "__main__":
-    # def f(x):
-    #     return math.exp(-0.1*x)/0.1/x
+    amount = 50
+    z = 0.8
+    cachesize = 60
+    total_rate = 20
+    Ts = 4
+    simulation_time = 10000
+    # random.seed(42)
+    zipf = Zipf(amount, z)
+    popularity_dict = zipf.popularity()
+    content = [i for i in range(1, amount + 1)]
+    popularity = [popularity_dict[i] for i in range(1, amount)]
 
-    # rate = 1.2293414655658288
-    # def F1(Tv):
-    #     return (Tv + math.exp(-rate * Tv)/rate - 1/rate) / (2 * 10.0 * Tv)
+    che = Che(amount, cachesize, zipf.popularity(), total_rate)
 
-    
-    # result = quad(F1, 0, 10.425828976866992)
+    result = []
+    index = []
 
-    # print(result)
+    for i in range(1, 50+1):
+        result.append(che.hitRatio()[i])
+        index.append(i)
 
-    size = 10000
-    value = []
-    ave = 10
-    count = 0.0
-    for i in range(size):
-        item = random.uniform(0,2*ave)
-        if item>ave:
-            count = count + 1
-        value.append(item)
-    
-    
-    print(count/size)
+    plt.plot(index,result)
+    plt.show()

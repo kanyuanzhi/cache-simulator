@@ -204,6 +204,10 @@ class Simulator(object):
         self.content = content
         self.popularity = popularity
         self.duration = 0.1
+        self.delta = 2000
+
+    def setDelta(self, d):
+        self.delta = d
      
     def setDuration(self, d):
         self.duration = d
@@ -221,12 +225,12 @@ class Simulator(object):
             self.cache.insert(item, self.env.now)
             # print(self.cache.cacheSize())
             duration = random.expovariate(self.rate)
-            if int(self.env.now) % 2000 == 0 and print_flag:
+            if int(self.env.now) % self.delta == 0 and print_flag:
                 print(self.env.now)
                 print(self.cache.cacheSize())
                 print(self.cache.totalHitRatio())
                 print_flag = False
-            if int(self.env.now) % 2000 != 0 and not print_flag:
+            if int(self.env.now) % self.delta != 0 and not print_flag:
                 print_flag = True
             yield self.env.timeout(duration)
     

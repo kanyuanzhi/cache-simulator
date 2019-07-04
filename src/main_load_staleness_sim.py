@@ -4,13 +4,8 @@ import matplotlib as mpl
 mpl.use('TkAgg')
 import matplotlib.pyplot as plt
 from mcav.zipf import Zipf
-from lru_simulator import Simulator
-from lru_simulator_uniform import SimulatorUniform
-from lru_simulator_exponential import SimulatorExponential
+from new_simulator import NewSimulator
 
-from model import Reactive, ProactiveRemove, ProactiveRenew
-from model_uniform import ReactiveUniform, ProactiveRemoveUniform
-from model_exponential import ReactiveExponential, ProactiveRemoveExponential
 
 if __name__ == "__main__":
     font1 = {
@@ -47,6 +42,8 @@ if __name__ == "__main__":
     load_sim_proactive_renew = []
     for expected_value in range(4, 41, 2):
         index.append(expected_value)
+
+        new_simulator = NewSimulator(cachesize, amount, expected_value, total_rate, z, N, pattern)
         env = simpy.Environment()
         simulator = Simulator(env, cachesize, amount, expected_value, total_rate,
                               content, popularity, "proactive_renew")

@@ -12,9 +12,9 @@ if __name__ == "__main__":
 
     amount = 5000
     z = 0.8
-    cachesize = 50
+    cachesize = 125
     total_rate = 20
-    expected_value = 2
+    expected_value = 10
     N = 20
     simulation_time = 10000
     # random.seed(42)
@@ -35,14 +35,18 @@ if __name__ == "__main__":
     popularity = [popularity_dict[i] for i in range(1, amount)]
 
     model = Model(amount, cachesize, total_rate, expected_value, popularity_dict, N, pattern, distribution).getModel()
-    print("Tc:", model.Che().T)
-    print("Tc0: ", model.Tc0())
-    # print("occupancy size: ", model._occupancySize())
+    if pattern == "proactive_remove" or pattern == "proactive_optional_renew":
+        # print("Tc:", model.Che().T)
+        print("Tc0: ", model.Tc0())
+        print("occupancy size: ", model._occupancy_size)
+        print("validation size: ", model._validation_size)
+
     print("model: ", model.totalHitRatio())
 
     env = simpy.Environment()
     simulator = Simulator(env, cachesize, amount, expected_value, total_rate, content, popularity, N, pattern, distribution).getSimulator()
-    simulator.setDuration(0.1)
+    simulator.setDuration(0.01)
+    simulator.setDelta(50)
     env.process(simulator.updateSim())
     env.process(simulator.insertSim())
     env.run(until=simulation_time)
@@ -68,6 +72,27 @@ if __name__ == "__main__":
         'family': 'Arial',
         'size': 15,
     }
+    font1 = {
+        'family': 'Arial',
+        'size': 16,
+    }
+
+    font2 = {
+        'family': 'Arial',
+        'size': 20,
+    }
+
+    # f = open('./hit_ratio_id/'+pattern+'_'+distribution+'_'+str(expected_value)+'.txt','w')
+    # f.write(str(hit_ratio_sim))
+    # f.write('\n')
+    # f.write(str(hit_ratio_model))
+    # f.write('\n')
+    # f.write(str(hit_ratio_sim[0:51]))
+    # f.write('\n')
+    # f.write(str(hit_ratio_model[0:51]))
+    # f.write('\n')
+    # f.write(str((model.totalHitRatio()-simulator.cache.totalHitRatio())/simulator.cache.totalHitRatio()))
+    # f.close()
 
     plt.plot(index, hit_ratio_sim, "+", color="black", label="simulation")
     plt.plot(index, hit_ratio_model, color="black", linewidth="1", label="model")
