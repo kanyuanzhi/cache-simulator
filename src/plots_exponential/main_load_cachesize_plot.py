@@ -23,6 +23,8 @@ if __name__ == "__main__":
 
     hit_ratio_model_proactive_optional_renew = [17.957417792602534, 17.434922528797514, 17.04285259748406, 16.732155496204378, 16.489862646352908, 16.396513217741898, 16.396513217741898, 16.396513217741898, 16.396513217741898, 16.396513217741898, 16.396513217741898, 16.396513217741898, 16.396513217741898, 16.396513217741898, 16.396513217741898, 16.396513217741898, 16.396513217741898, 16.396513217741898, 16.396513217741898]
 
+    hit_ratio_model_proactive_optional_renew_fixed = [17.717527389066362, 17.27666183346245, 17.04285259748406, 16.96002192388173, 17.021586425687218, 17.327557887223684, 17.666897293501727, 18.01683867238713, 18.375867088576015, 18.742787055376905, 19.11663614255073, 19.49662646252814, 19.88210375634235, 20.272518008514123, 20.66740185321826, 21.06635438821391, 21.46902883004781, 21.875122953691573, 22.28437158703909]
+
 
     hit_ratio_sim_reactive = [17.468, 17.293, 16.841, 16.526, 16.271, 16.195, 16.234, 15.768, 15.801, 16.087, 15.676, 15.918, 15.573, 15.415, 15.639, 15.755, 15.835, 15.738, 15.466]
 
@@ -41,6 +43,8 @@ if __name__ == "__main__":
     plt.plot(index_sim, hit_ratio_sim_proactive_remove, "2", color="black", label="sim: proactive removing")
     plt.plot(index_sim, hit_ratio_sim_reactive, "+", color="black", label="sim: reactive")
 
+    plt.plot(index_model, hit_ratio_model_proactive_optional_renew_fixed,dashes=[10, 5, 20, 5], color="black", linewidth="1", label="model: proactive optional renewing")
+
     plt.plot(index_model, hit_ratio_model_proactive_optional_renew,"--", color="black", linewidth="1", label="model: proactive optional renewing")
     plt.plot(index_model, hit_ratio_model_proactive_renew,"-", color="black", linewidth="1", label="model: proactive renewing")
     plt.plot(index_model, hit_ratio_model_proactive_remove,":", color="black", linewidth="1", label="model: proactive removing")
@@ -50,7 +54,7 @@ if __name__ == "__main__":
     # plt.plot(index, hit_ratio_model_uniform, label="model-uniform")
     # plt.plot(index, hit_ratio_model_exponential, label="model-exponential")
 
-    plt.xlabel("cache size", font1)
+    plt.xlabel("cache capacity", font1)
     plt.ylabel("server load (req/s)", font1)
     plt.grid(True)
     # plt.axis([50, 255, 0.1, 0.35], font1)

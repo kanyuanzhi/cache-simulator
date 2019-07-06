@@ -52,27 +52,33 @@ if __name__ == "__main__":
     load_model_proactive_optional_renew = []
     i = 0
     for cachesize in range(50, 501, 25):
-        index.append(cachesize)
-        model1 = Model(amount, cachesize, total_rate, expected_value, popularity_dict, N, "reactive",
-                       distribution).getModel()
-        hit_ratio_model_reactive.append(model1.totalHitRatio())
-        load_model_reactive.append(model1.totalLoad())
-        print("reactive ready!")
+        # index.append(cachesize)
+        # model1 = Model(amount, cachesize, total_rate, expected_value, popularity_dict, N, "reactive",
+        #                distribution).getModel()
+        # hit_ratio_model_reactive.append(model1.totalHitRatio())
+        # load_model_reactive.append(model1.totalLoad())
+        # print("reactive ready!")
+        #
+        # model2 = Model(amount, cachesize, total_rate, expected_value, popularity_dict, N, "proactive_remove",
+        #                distribution).getModel()
+        # hit_ratio_model_proactive_remove.append(model2.totalHitRatio())
+        # load_model_proactive_remove.append(model2.totalLoad())
+        # print("proactive_remove ready!")
+        #
+        # model3 = Model(amount, cachesize, total_rate, expected_value, popularity_dict, N, "proactive_renew",
+        #                distribution).getModel()
+        # hit_ratio_model_proactive_renew.append(model3.totalHitRatio())
+        # load_model_proactive_renew.append(model3.totalLoad())
+        #
+        # print("proactive_renew ready!")
+        #
+        # model4 = Model(amount, cachesize, total_rate, expected_value, popularity_dict, N, "proactive_optional_renew",
+        #                distribution).getModel()
+        # hit_ratio_model_proactive_optional_renew.append(model4.totalHitRatio())
+        # load_model_proactive_optional_renew.append(model4.totalLoad())
+        # print("proactive_optional_renew ready!", hit_ratio_model_proactive_optional_renew[i])
 
-        model2 = Model(amount, cachesize, total_rate, expected_value, popularity_dict, N, "proactive_remove",
-                       distribution).getModel()
-        hit_ratio_model_proactive_remove.append(model2.totalHitRatio())
-        load_model_proactive_remove.append(model2.totalLoad())
-        print("proactive_remove ready!")
-
-        model3 = Model(amount, cachesize, total_rate, expected_value, popularity_dict, N, "proactive_renew",
-                       distribution).getModel()
-        hit_ratio_model_proactive_renew.append(model3.totalHitRatio())
-        load_model_proactive_renew.append(model3.totalLoad())
-
-        print("proactive_renew ready!")
-
-        model4 = Model(amount, cachesize, total_rate, expected_value, popularity_dict, N, "proactive_optional_renew",
+        model4 = Model(amount, cachesize, total_rate, expected_value, popularity_dict, int(cachesize*0.2), "proactive_optional_renew",
                        distribution).getModel()
         hit_ratio_model_proactive_optional_renew.append(model4.totalHitRatio())
         load_model_proactive_optional_renew.append(model4.totalLoad())

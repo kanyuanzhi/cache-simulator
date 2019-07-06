@@ -11,7 +11,7 @@ from simulator import LeafSim, NetworkSim
 
 
 def sim(amount, cachesize, total_rate, expected_value, N, simulation_time, z, pattern, hit_ratio, load):
-    network = Network(amount, expected_value, N, simulation_time, pattern)
+    network = Network(amount, expected_value, simulation_time, N, pattern)
 
     node1 = Node(cachesize, network, "root", pattern, 1)
     node2 = Node(cachesize, network, "router", pattern, 2)
@@ -55,7 +55,7 @@ def sim(amount, cachesize, total_rate, expected_value, N, simulation_time, z, pa
     print(network.totalHitRatio())
     hit_ratio.append(network.totalHitRatio())
     print(network.totalLoad())
-    load.append(network.totalLoad())
+    load.append(network.totalLoad()/float(simulation_time))
 
 
 if __name__ == "__main__":
@@ -64,7 +64,7 @@ if __name__ == "__main__":
     cachesize = 100
     total_rate = 20
     expected_value = 10
-    simulation_time = 2000
+    simulation_time = 500
     N = 20
 
 
@@ -78,9 +78,13 @@ if __name__ == "__main__":
     hit_ratio = []
     load = []
 
-    for cachesize in range(50, 201, 50):
+    # for cachesize in range(50, 501, 50):
+    #     sim(amount, cachesize, total_rate, expected_value, N, simulation_time, z, pattern, hit_ratio, load)
+    #     print("period: ", cachesize)
+    #
+    for expected_value in range(2, 51, 2):
         sim(amount, cachesize, total_rate, expected_value, N, simulation_time, z, pattern, hit_ratio, load)
-        print("period: ", cachesize)
+        print("period: ", expected_value)
 
     print(hit_ratio)
     print(load)

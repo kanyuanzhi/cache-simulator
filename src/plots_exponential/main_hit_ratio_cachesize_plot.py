@@ -23,6 +23,7 @@ if __name__ == "__main__":
 
     hit_ratio_model_proactive_optional_renew = [0.14312141646424986, 0.1847509634791129, 0.21796342106218286, 0.2457286154339288, 0.26909600637305375, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466, 0.28017433911278466]
 
+    hit_ratio_model_proactive_optional_renew_fixed = [0.1419813136349537, 0.18363891252565007, 0.21796342106218286, 0.24854487071217252, 0.2776580634344566, 0.3086221056387178, 0.31665513532481515, 0.32415806638054556, 0.3312066455711007, 0.33786064723105624, 0.3441681928723657, 0.35016867687349384, 0.35589481218278335, 0.3613740995741959, 0.3666299073389893, 0.37168228058920627, 0.376548558497511, 0.38124385231532343, 0.38578142064794807]
 
 
     hit_ratio_sim_reactive = [0.1225637934498694, 0.14433448787728848, 0.16359572883039483, 0.17903626428216593, 0.1874656679151061, 0.19663673793342923, 0.19685892609470973, 0.20648180765940316, 0.21020810569186452, 0.20812207728279597, 0.21297319007932522, 0.2119021685315378, 0.21463513036461748, 0.22213251248927687, 0.21329040696212084, 0.21861826117145267, 0.21834259213085324, 0.21693700865757787, 0.21746609997976118]
@@ -39,10 +40,14 @@ if __name__ == "__main__":
     index_model = [i*25+50 for i in range(len(hit_ratio_model_reactive))]
     index_sim = [i*25+50 for i in range(len(hit_ratio_sim_proactive_remove))]
 
+
     plt.plot(index_sim, hit_ratio_sim_proactive_optional_renew, "x", color="black", label="sim: proactive optional renewing")
     plt.plot(index_sim, hit_ratio_sim_proactive_renew, ".", color="black", label="sim: proactive renewing")
     plt.plot(index_sim, hit_ratio_sim_proactive_remove, "2", color="black", label="sim: proactive removing")
     plt.plot(index_sim, hit_ratio_sim_reactive, "+", color="black", label="sim: reactive")
+
+
+    plt.plot(index_model, hit_ratio_model_proactive_optional_renew_fixed,dashes=[10, 5, 20, 5], color="black", linewidth="1", label="model: proactive optional renewing")
 
     plt.plot(index_model, hit_ratio_model_proactive_optional_renew,"--", color="black", linewidth="1", label="model: proactive optional renewing")
     plt.plot(index_model, hit_ratio_model_proactive_renew,"-", color="black", linewidth="1", label="model: proactive renewing")
@@ -53,7 +58,7 @@ if __name__ == "__main__":
     # plt.plot(index, hit_ratio_model_uniform, label="model-uniform")
     # plt.plot(index, hit_ratio_model_exponential, label="model-exponential")
 
-    plt.xlabel("cache size", font1)
+    plt.xlabel("cache capacity", font1)
     plt.ylabel("hit probability", font1)
     plt.grid(True)
     # plt.axis([50, 255, 0.1, 0.35], font1)

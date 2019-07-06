@@ -10,8 +10,8 @@ from network import Network
 from simulator import LeafSim, NetworkSim
 
 
-def sim(amount, cachesize, total_rate, expected_value, simulation_time, z, pattern, hit_ratio, load):
-    network = Network(amount, expected_value, simulation_time, pattern)
+def sim(amount, cachesize, total_rate, expected_value, N, simulation_time, z, pattern, hit_ratio, load):
+    network = Network(amount, expected_value, simulation_time ,N ,pattern)
 
     node1 = Node(cachesize, network, "root", pattern, 1)
     node2 = Node(cachesize, network, "router", pattern, 2)
@@ -84,29 +84,30 @@ def sim(amount, cachesize, total_rate, expected_value, simulation_time, z, patte
     print(network.totalHitRatio())
     hit_ratio.append(network.totalHitRatio())
     print(network.totalLoad())
-    load.append(network.totalLoad())
+    load.append(network.totalLoad()/float(simulation_time))
 
 
 if __name__ == "__main__":
     amount = 5000
     z = 0.8
-    cachesize = 250
+    cachesize = 100
     total_rate = 20
-    expected_value = 5
-    simulation_time = 2000
-
+    expected_value = 10
+    simulation_time = 500
+    N = 20
 
     # random.seed(42)
 
     # pattern = "reactive"
     # pattern = "proactive_remove"
-    pattern = "proactive_renew"
+    # pattern = "proactive_renew"
+    pattern = "proactive_optional_renew"
 
     hit_ratio = []
     load = []
 
     for cachesize in range(50, 251, 50):
-        sim(amount, cachesize, total_rate, expected_value, simulation_time, z, pattern, hit_ratio, load)
+        sim(amount, cachesize, total_rate, expected_value, N, simulation_time, z, pattern, hit_ratio, load)
         print("period: ", cachesize)
 
     print(hit_ratio)
