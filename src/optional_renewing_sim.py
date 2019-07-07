@@ -40,17 +40,29 @@ if __name__ == "__main__":
     index = []
     hit_ratio = []
     load = []
+    # cachesize = 100
+    cachesize = 200
+    cachesize = 300
+    cachesize = 400
+    cachesize = 500
 
-    new_simulator = NewSimulator(cachesize, amount, expected_value, total_rate, z, 30, pattern, simulation_time)
-    print(new_simulator.cache.totalHitRatio())
-    print(new_simulator.cache.totalLoad()/float(simulation_time))
-
-    for N in range(10, 151, 10):
-        new_simulator = NewSimulator(cachesize, amount, expected_value, total_rate, z, N, pattern, simulation_time)
+    for r in np.arange(1.5, 1.6, 0.1):
+        new_simulator = NewSimulator(cachesize, amount, expected_value, total_rate, z, int(cachesize*r), pattern, simulation_time)
         hit_ratio.append(new_simulator.cache.totalHitRatio())
         load.append(new_simulator.cache.totalLoad()/float(simulation_time))
-        index.append(N)
-        print("N: ", N)
+        index.append(r)
+        print("r: ", r)
+
+    # new_simulator = NewSimulator(cachesize, amount, expected_value, total_rate, z, 30, pattern, simulation_time)
+    # print(new_simulator.cache.totalHitRatio())
+    # print(new_simulator.cache.totalLoad()/float(simulation_time))
+
+    # for N in range(10, 151, 10):
+    #     new_simulator = NewSimulator(cachesize, amount, expected_value, total_rate, z, N, pattern, simulation_time)
+    #     hit_ratio.append(new_simulator.cache.totalHitRatio())
+    #     load.append(new_simulator.cache.totalLoad()/float(simulation_time))
+    #     index.append(N)
+    #     print("N: ", N)
 
     print(hit_ratio)
     print(load)

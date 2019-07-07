@@ -12,7 +12,7 @@ if __name__ == "__main__":
 
     amount = 5000
     z = 0.8
-    cachesize = 125
+    cachesize = 100
     total_rate = 20
     expected_value = 10
     N = 20

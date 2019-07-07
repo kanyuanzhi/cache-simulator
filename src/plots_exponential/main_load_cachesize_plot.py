@@ -57,7 +57,7 @@ if __name__ == "__main__":
     plt.xlabel("cache capacity", font1)
     plt.ylabel("server load (req/s)", font1)
     plt.grid(True)
-    # plt.axis([50, 255, 0.1, 0.35], font1)
+    # plt.axis([15, 35, 0, 200], [35, 65, 200, 500], font1)
     my_x_ticks = np.arange(0, 501, 100)
     my_y_ticks = np.arange(15, 80, 10)
     plt.xticks(my_x_ticks)
