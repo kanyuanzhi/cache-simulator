@@ -41,7 +41,7 @@ class Mp0(object):
                     Mp_max = Mp_max
                     Mp_min = Mp
                 Mp = (Mp_max - Mp_min) / 2 + Mp_min
-        return Mp
+        return int(Mp)
 
 if __name__ == "__main__":
     amount = 5000

@@ -20,6 +20,10 @@ if __name__ == "__main__":
 
     load_sim_500 = [18.395, 22.1818, 26.366, 30.7808, 35.315, 39.5698, 44.0868, 48.8694, 50.1944, 50.8502, 51.176, 51.741, 51.2122, 51.6164, 52.0658]
 
+    mp0_index = [0.21714285714285714, 0.355, 0.4577777777777778, 0.528, 0.5854545454545454, 0.63, 0.6707692307692308, 0.7, 0.7306666666666667, 0.7525, 0.7694117647058824, 0.7866666666666666, 0.8021052631578948, 0.818, 0.8304761904761905, 0.84]
+
+    mp0_data = [17.518820923065956, 19.959807679951147, 22.507774064592258, 24.964817558950365, 27.46345800915941, 29.92109968696535, 32.50030961239605, 34.93184580427335, 37.50726496744255, 40.00341870395906, 42.4243768593999, 44.92022249917888, 47.42728760507575, 50.00303900024912, 52.50492915717933, 55.00026872991643]
+
 
     index = [i*0.1+0.1 for i in range(len(load_sim_100))]
 
@@ -43,7 +47,7 @@ if __name__ == "__main__":
     plt.plot(index, load_model[2], ":", color="black", linewidth="1", label="model: $C=300$")
     plt.plot(index, load_model[3], "--", color="black", linewidth="1", label="model: $C=400$")
     plt.plot(index, load_model[4], dashes=[10, 2, 10, 2], color="black", linewidth="1", label="model: $C=500$")
-
+    plt.plot(mp0_index, mp0_data, "-", color="black", linewidth="1", label="model: turning points")
 
     plt.xlabel("$M_p/C$", font1)
     plt.ylabel("server load (req/s)", font1)
@@ -53,6 +57,6 @@ if __name__ == "__main__":
     my_y_ticks = np.arange(15, 85, 10)
     plt.xticks(my_x_ticks)
     plt.yticks(my_y_ticks)
-    plt.legend(prop=font2,ncol=2,loc='upper left')
+    plt.legend(prop=font2,ncol=3,loc='upper left',columnspacing=1)
     # plt.savefig("kan6.eps")
     plt.show()

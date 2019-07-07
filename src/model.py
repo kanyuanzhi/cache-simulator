@@ -1,6 +1,6 @@
 import sys
-sys.path.append('./src/model')
-# sys.path.append('./model')
+# sys.path.append('./src/model')
+sys.path.append('./model')
 import model_constant as mc
 import model_uniform as mu
 import model_exponential as me

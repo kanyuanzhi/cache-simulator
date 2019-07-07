@@ -20,6 +20,8 @@ if __name__ == "__main__":
 
     hit_ratio_sim_500 = [0.33135013725979534, 0.38541541058724227, 0.42324862809618874, 0.45181499355534904, 0.47696226208598236, 0.5017614999347593, 0.5195696086078279, 0.5357448927857803, 0.528871575068098, 0.5274957403772381, 0.5233693581697512, 0.5204550666547018, 0.5153480806113125, 0.5105869445968184, 0.5080196235482579]
 
+    mp0_index = [0.21714285714285714, 0.355, 0.4577777777777778, 0.528, 0.5854545454545454, 0.63, 0.6707692307692308, 0.7, 0.7306666666666667, 0.7525, 0.7694117647058824, 0.7866666666666666, 0.8021052631578948, 0.818, 0.8304761904761905, 0.84]
+    mp0_data = [0.31279594350310247, 0.3570096160023439, 0.3880444770031509, 0.411759122052386, 0.43182709954193566, 0.4489450156516402, 0.4648651865252173, 0.4784077097862468, 0.49142381429646714, 0.5031758291379648, 0.5137811570299275, 0.5239888750409808, 0.5336356197461385, 0.5429650202199953, 0.5515649659357376, 0.559797305843365]
 
     index = [i*0.1+0.1 for i in range(len(hit_ratio_sim_100))]
 
@@ -38,11 +40,12 @@ if __name__ == "__main__":
     plt.plot(index, hit_ratio_sim_300, "2", color="black", label="sim: $C=300$")
     plt.plot(index, hit_ratio_sim_400, "+", color="black", label="sim: $C=400$")
     plt.plot(index, hit_ratio_sim_500, "x", color="black", label="sim: $C=500$")
-    plt.plot(index, hit_ratio_model[0], "-", color="black", linewidth="1", label="model: $C=100$")
+    plt.plot(index, hit_ratio_model[0], dashes=[10, 2, 2, 2], color="black", linewidth="1", label="model: $C=100$")
     plt.plot(index, hit_ratio_model[1], "-.", color="black", linewidth="1", label="model: $C=200$")
     plt.plot(index, hit_ratio_model[2], ":", color="black", linewidth="1", label="model: $C=300$")
     plt.plot(index, hit_ratio_model[3], "--", color="black", linewidth="1", label="model: $C=400$")
     plt.plot(index, hit_ratio_model[4], dashes=[10, 5, 20, 5], color="black", linewidth="1", label="model: $C=500$")
+    plt.plot(mp0_index, mp0_data, "-", color="black", linewidth="1", label="model: turning points")
 
 
     plt.xlabel("$M_p/C$", font1)
@@ -53,6 +56,6 @@ if __name__ == "__main__":
     my_y_ticks = np.arange(0.15, 0.8, 0.1)
     plt.xticks(my_x_ticks)
     plt.yticks(my_y_ticks)
-    plt.legend(prop=font2,ncol=2,loc='upper left')
+    plt.legend(prop=font2,ncol=3,loc='upper left',columnspacing=1)
     # plt.savefig("kan6.eps")
     plt.show()
