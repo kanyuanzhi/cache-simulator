@@ -78,7 +78,7 @@ if __name__ == "__main__":
     # plt.plot(index, hit_ratio_model_uniform, label="model-uniform")
     # plt.plot(index, hit_ratio_model_exponential, label="model-exponential")
 
-    plt.xlabel("mean staleness time (s)", font1)
+    plt.xlabel("mean expiration time (s)", font1)
     plt.ylabel("hit probability", font1)
     plt.grid(True)
     # plt.axis([2, 42, 0.09, 0.15], font1)

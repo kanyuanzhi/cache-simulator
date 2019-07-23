@@ -80,7 +80,7 @@ if __name__ == "__main__":
     # plt.plot(index, hit_ratio_model_uniform, label="model-uniform")
     # plt.plot(index, hit_ratio_model_exponential, label="model-exponential")
 
-    plt.xlabel("mean staleness time (s)", font1)
+    plt.xlabel("mean expiration time (s)", font1)
     plt.ylabel("server load (req/s)", font1)
     plt.grid(True)
     # plt.axis([30, 60, 15, 20], font1)
